@@ -107,16 +107,22 @@ options may be specified:
 	
   secondary {account|ignore} IP MASK PORT
 	See explanations on primary rules above
-  
-  sql HOST DATABASE TABLE USER PASSWORD
-        This entry is used by a dumping-program, to connect to a sql-server. every table is 
-	required to the following fields:
+ 
+  dump RULE
+  RULE can by one of the following
+    stdout 
+    syslog
+    textfile <filename>
+    binfile <filename> 
+    { mysql | pgsql } host database table user password 
+    
+  If you decide to use a database, your tabel must have the folowing columns at least:
 	    Name     Type      Description
 	    input    INTEGER   Takes the value of data received by that ip
 	    output   INTEGER   Takes the value of data sent by that ip
 	    ip	     CHAR(15)  Takes the ip
 	    timetag  INTEGER   Takes the integer part of th number of seconds 
-	    		       since epoch divided by time diver
+	            		       since epoch divided by time diver
 
 	The dumping program is clever enough to determine if a update or a insert if to 
 	be executed (by trying to update first and if this fails it inserts). So you can set
@@ -136,14 +142,6 @@ options may be specified:
 
 		bytedivider 1024 # this will store the amount in kilobytes	    
 	
- dump EXEC
- 	This takes an executable that will be executed at a dump. So care is to be taken here to avoid
-	any exploits. The program is executed with the following arguments:
-		FIFO Filename - The filename where data will be dumped into
-		Category      -	The name of the category
-		Conf File     - Configuration File used by Traff
-		PPID	      - The Parents PID
-	Probably you will want to use some ready programs for this like traff_stdout_dump or 
-	traff_mysql_dump.
+ 
 		
 

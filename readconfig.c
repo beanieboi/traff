@@ -24,8 +24,9 @@
 #define WHITESPACE " \t\r\n"
 
 typedef enum {
+  //      oSQL,
       oBadOption,oDevices,oPeriod,oCat,
-      oPrimary, oSecondary, oTimeDivider, oByteDivider, oDump, oSQL, oPackagecount, oBuffersize
+      oPrimary, oSecondary, oTimeDivider, oByteDivider, oDump, oPackagecount, oBuffersize
 } e_opcodes;
 
 static struct {
@@ -40,19 +41,17 @@ static struct {
   { "timedivider", oTimeDivider },
   { "bytedivider", oByteDivider },
   { "dump", oDump },
-  { "sql", oSQL },
-  { "packagecount", oPackagecount },
   { "buffersize", oBuffersize },
   { NULL,0 }
 };
 
 
 
-//--- Function POrototypes --------------------------------------------------------
+//--- Function Prototypes --------------------------------------------------------
 char * strdelim(char **s);
 static e_opcodes parse_token(const char *cp);
 unsigned int ipstrtoint(char * ipstr);
-void test_init(t_config * config);
+static e_dumptypes parse_dump_token(const char *cp);
 //---------------------------------------------------------------------------------
 t_config * config_init(t_config * config,char * filename) {
 
@@ -61,6 +60,7 @@ t_config * config_init(t_config * config,char * filename) {
   config->devices = 0;
   config->cats = 0;
   config->devicecount = 0;
+  config->buffer_size = 500;
   
   bzero(conf_file,FILELENGTH);
   strncpy(conf_file,filename,FILELENGTH);
@@ -124,10 +124,8 @@ int config_read_config_file(t_config * config,char * filename) {
           while (!(arg == NULL || !*arg || *arg == '\n' || *arg == '#')) {
             new_device = (t_interface_list *)malloc(sizeof(t_interface_list));
             new_device->device = 0;
-            new_device->buffer = 0;
             new_device->package_count = packagecount;
-            new_device->read_buffer = 0;
-            new_device->write_buffer = 0;
+	    new_device->thread = (pthread_t *) malloc(sizeof(pthread_t));
             strcpy(new_device->name, arg);
             config->devicecount += 1;
             // first we will insert the devices into this list. Later on, we will make a ring-list of this list
@@ -146,19 +144,24 @@ int config_read_config_file(t_config * config,char * filename) {
           new_device =  config->devices;
           while (new_device->next)
             new_device = new_device->next;  //arrived at the end of the list
-          new_device->next = config->devices; // now the last element points to the first.
+            new_device->next = 0; 
           break;
         case oPeriod:
            config->cycletime = atoi(arg);
            break;
+        case oBuffersize:
+           config->buffer_size = atoi(arg);
+           break;
         case oPackagecount:
            packagecount = atoi(arg);
            if ( packagecount * 0.8 > (int)( 0.8 * BUFFERSIZE)) {
-             fprintf(stderr, "Packagecount may not be bigger that %d\n", (int)( 0.8 * BUFFERSIZE));
+             fprintf(stderr, "Packagecount may not be bigger than %d\n", (int)( 0.8 * BUFFERSIZE));
              packagecount = (int)( 0.8 * BUFFERSIZE);
            }  
            break;
-        case oCat:
+
+
+         case oCat:
            active_cat = (t_cat *)malloc(sizeof(t_cat));
            // initializing
            active_cat->primary = 0;
@@ -168,8 +171,7 @@ int config_read_config_file(t_config * config,char * filename) {
            active_cat->table = 0;
            active_cat->next = 0;
            active_cat->sql = 0;
-           bzero(active_cat->dump_programm, FILELENGTH);
-           bzero(active_cat->name, TEXTLEN); 
+	   active_cat->dump_type = dt_Stdout;
            strncpy(active_cat->name,arg,TEXTLEN-1);          
            if (config->cats) {
              cat = config->cats;
@@ -215,24 +217,6 @@ int config_read_config_file(t_config * config,char * filename) {
            filter->mask = ipstrtoint(strdelim(&s));
            filter->port = atoi(strdelim(&s));
            break;           
-        case oSQL:
-           if (! active_cat) {
-             fprintf(stderr,"Traff: Reading Cat-option %s outside a Cat, in file %s, line %d.\n",keyword,filename,linenum);
-             exit(1);
-           }
-//           if (!active_cat->sql) active_cat->sql = (t_sql *)  malloc(sizeof(t_sql));
-           active_cat->sql = (t_sql *) malloc(sizeof(t_sql));
-           bzero(active_cat->sql->host, LONGTEXT);
-           bzero(active_cat->sql->db, LONGTEXT);
-           bzero(active_cat->sql->table, LONGTEXT);
-           bzero(active_cat->sql->user, LONGTEXT);
-           bzero(active_cat->sql->password, LONGTEXT);
-           strncpy(active_cat->sql->host, arg,  LONGTEXT);
-           strncpy(active_cat->sql->db, strdelim(&s), LONGTEXT);
-           strncpy(active_cat->sql->table, strdelim(&s), LONGTEXT);
-           strncpy(active_cat->sql->user, strdelim(&s), LONGTEXT);
-           strncpy(active_cat->sql->password, strdelim(&s), LONGTEXT);
-           break;
         case oTimeDivider:
            if (! active_cat) {
              fprintf(stderr,"Traff: Reading Cat-option %s outside a Cat, in file %s, line %d.\n",keyword,filename,linenum);
@@ -252,20 +236,31 @@ int config_read_config_file(t_config * config,char * filename) {
              fprintf(stderr,"Traff: Reading Cat-option %s outside a Cat, in file %s, line %d.\n",keyword,filename,linenum);
              exit(1);
            }
-           strncpy(active_cat->dump_programm, arg, FILELENGTH);
-            
+	   
+	   active_cat->dump_type = parse_dump_token(arg);
+	   if ((active_cat->dump_type == dt_Pgsql) || (active_cat->dump_type == dt_Mysql)) { 
+             active_cat->sql = (t_sql *) malloc(sizeof(t_sql));
+             bzero(active_cat->sql->host, LONGTEXT);
+             bzero(active_cat->sql->db, LONGTEXT);
+             bzero(active_cat->sql->table, LONGTEXT);
+             bzero(active_cat->sql->user, LONGTEXT);
+             bzero(active_cat->sql->password, LONGTEXT);
+             strncpy(active_cat->sql->host, strdelim(&s),  LONGTEXT);
+             strncpy(active_cat->sql->db, strdelim(&s), LONGTEXT);
+             strncpy(active_cat->sql->table, strdelim(&s), LONGTEXT);
+             strncpy(active_cat->sql->user, strdelim(&s), LONGTEXT);
+             strncpy(active_cat->sql->password, strdelim(&s), LONGTEXT);
+	   } else if (active_cat->dump_type == dt_Textfile || active_cat->dump_type == dt_Binfile) {
+	     active_cat->filename = (char *) malloc(FILELENGTH);
+	     strncpy(active_cat->filename, strdelim(&s), FILELENGTH);
+	   }
+           
            break;
         default:
           fprintf(stderr,"Traff: config_read_config_file: Unimplemented OpCode %d\n",opcode);
       }
-            
-
-
     }
   }
-  
-
-  
   fclose(conf_file);
 
 }       
@@ -282,88 +277,36 @@ unsigned int ipstrtoint(char * ipstr) {
   return i;
 }
 //---------------------------------------------------------------------------------
+static e_dumptypes parse_dump_token(const char *cp){
+  unsigned int i;
+  for (i = 0; dump_types[i].name; i++)
+    if (strcasecmp(cp, dump_types[i].name) == 0)
+       return dump_types[i].dump_type;
+                
+  return dt_BadOption;
+}
+//--------------------------------------------------------------------------------
+char * get_dump_type_str(e_dumptypes dumptype) {
+  unsigned int i;
+  char * charBadOption;
+  for (i = 0; keywords[i].name; i++) {
+    if (dumptype == dump_types[i].dump_type) 
+       return (char *) dump_types[i].name;
+    if (dt_BadOption == dump_types[i].dump_type)
+      charBadOption = (char *) dump_types[i].name;
+  }
+  return charBadOption;
+}
+//---------------------------------------------------------------------------------
 static e_opcodes parse_token(const char *cp) {
   unsigned int i;
   for (i = 0; keywords[i].name; i++)
     if (strcasecmp(cp, keywords[i].name) == 0)
        return keywords[i].opcode;
-                     
-  return oBadOption;
+                   
+  return dt_BadOption;
 }
 //---------------------------------------------------------------------------------
-void test_init(t_config * config) {
-  char buff[8];
-  t_ip_filter * filtertemp;
-  
-  config->cycletime = 600; 
-  
-  //initializing devices
-  config->devices = (t_interface_list *) malloc(sizeof(t_interface_list));
-  config->devicecount = 1;
-  strncpy(config->devices->name,"eth0",TEXTLEN);
-  config->devices->next = config->devices;
- 
-  //initilize list
-  config->cats = ( t_cat *) malloc(sizeof(t_cat));
-  strncpy(config->cats->name, "WuInt", TEXTLEN);
-  config->cats->next = 0;
-  config->cats->table = 0;
-  config->cats->primary = 0;
-  config->cats->secondary = 0;
-  config->cats->timedivider = 86400;
-  config->cats->bytedivider = 1024; 
-  strncpy(config->cats->dump_programm,"traff_stdout_dump", FILELENGTH);
-  config->cats->thread = 0;
-  
-    //now adding some secondary filters
-    filtertemp = (t_ip_filter *) malloc(sizeof(t_ip_filter));
-    filtertemp->ip   = 0x00000000;
-    filtertemp->mask = 0x00000000;
-    filtertemp->port = 0;
-    filtertemp->prot = 0;
-    filtertemp->value = 1;
-    filtertemp->next = 0;
-    config->cats->secondary = filtertemp;
-    //now adding some primary filters
-    filtertemp = (t_ip_filter *) malloc(sizeof(t_ip_filter));
-    filtertemp->ip   = 0x8d1ee400;
-    filtertemp->mask = 0xffffff00;
-    filtertemp->port = 0;
-    filtertemp->prot = 0;
-    filtertemp->value = 1;
-    filtertemp->next = 0;
-    config->cats->primary = filtertemp;
-    
-    filtertemp->next = (t_ip_filter *) malloc(sizeof(t_ip_filter));
-    filtertemp = filtertemp->next;
-    filtertemp->ip   = 0x8d1ee300;
-    filtertemp->mask = 0xffffff00;
-    filtertemp->port = 0;
-    filtertemp->prot = 0;
-    filtertemp->value = 1;
-    filtertemp->next = 0;
-  
-    filtertemp->next = (t_ip_filter *) malloc(sizeof(t_ip_filter));
-    filtertemp = filtertemp->next;
-    filtertemp->ip   = 0x8d1ee200;
-    filtertemp->mask = 0xffffff00;
-    filtertemp->port = 0;
-    filtertemp->prot = 0;
-    filtertemp->value = 1;
-    filtertemp->next = 0;
- 
-    filtertemp->next = (t_ip_filter *) malloc(sizeof(t_ip_filter));
-    filtertemp = filtertemp->next;
-    filtertemp->ip   = 0x8d1edf00;
-    filtertemp->mask = 0xffffff00;
-    filtertemp->port = 0;
-    filtertemp->prot = 0;
-    filtertemp->value = 1;
-    filtertemp->next = 0;
-
-}
-
-//-----------------------------------------------------------------------------------------
 char * strdelim(char **s) {
   char *old;
   int wspace = 0;

@@ -2,10 +2,20 @@
 #ifndef READCONFIG_H
 #define READCONFIG_H
 
+#define VERSION "0.6"
+
 #define TEXTLEN 32 
 #define FILELENGTH 1024
 #define LONGTEXT 32
-//#define DEBUG
+#define QUERYLENGTH 1024
+
+#if withMYSQL
+#include <mysql/mysql.h>
+#endif
+
+#if withPGSQL
+#include <postgresql/libpq-fe.h>
+#endif
 
 #include <pcap.h> 
 #include <pthread.h> 
@@ -13,6 +23,24 @@
 
 typedef unsigned int U_INT;
 typedef unsigned char U_CHAR;
+
+typedef enum {
+  dt_Stdout, dt_Syslog, dt_Textfile, dt_Binfile, dt_Mysql, dt_Pgsql, dt_BadOption
+} e_dumptypes;
+
+static struct { 
+  const char * name;
+  e_dumptypes dump_type;
+} dump_types[] = {
+      { "StdOut", dt_Stdout },
+      { "Syslog", dt_Syslog },
+      { "TextFile", dt_Textfile },
+      { "BinFile", dt_Binfile },
+      { "MySQL", dt_Mysql },
+      { "PgSQL", dt_Pgsql },
+      { "--Error: Bad Option--", dt_BadOption },
+      { NULL, 0 }
+};
 
 typedef struct t_ip_filter {
   U_INT ip;
@@ -24,12 +52,12 @@ typedef struct t_ip_filter {
 } t_ip_filter;
 
 
-#define BUFFERSIZE 500
+#define BUFFERSIZE 10000
 typedef void* t_BUFFER[BUFFERSIZE];
 typedef struct t_interface_list {
   pcap_t * device;
-  t_BUFFER *  buffer;
-  int read_buffer;
+  pthread_t * thread;
+// not needed any more (KD)
   int package_count;
   int buffersize;
   int write_buffer;
@@ -55,14 +83,16 @@ typedef struct t_cat {
   int bytedivider;
   pthread_t thread;
   struct t_cat *next;
-  char dump_programm[FILELENGTH];
+  e_dumptypes dump_type;
   t_sql * sql;
+  char * filename;
 } t_cat;
 
 typedef struct t_config {
   int cycletime;
   int devicecount;
   int dt;
+  int buffer_size;
   t_interface_list * devices;
   t_cat * cats;
 } t_config;
@@ -84,6 +114,7 @@ typedef struct t_data {
 t_config * config_init(t_config * config,char * filename);
 int config_read_config_file(t_config * config,char * filename);
 void config_destroy(t_config * config);
+char * get_dump_type_str(e_dumptypes dumptype);
 
 char conf_file[FILELENGTH];
 

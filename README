@@ -1,7 +1,5 @@
 	Traff - Traffic Accounting Program
-	Version 0.4
-	(c) 2001 - Hans Marcus Krüger
-	
+	Version 0.6
 
 WHAT IS IT? 
 
@@ -9,32 +7,22 @@ WHAT IS IT?
   sniffs all IP-packages passing at it and accounts each packets size. The collected 
   information can be dumped to a mysql-Database, for further processing.
 
+
 HOW DOES IT WORK?
+
   The whole thing about Traff, is that you can specify for what IP you want to account 
-  the traffic, and even for what IPs talking with witch peer. This means, that if you 
-  have a big uplink and you want to discover how much each or some hosts on your network 
-  are using this uplink, you can do that without caring about the other IP, as other 
+  the traffic, and even for what IPs talking with which peer. This means, that if you 
+  have a big up-link and you want to discover how much each or some hosts on your network 
+  are using this up-link, you can do that without caring about the other IP, as other 
   programs do. So much less data will be stored at your database.
   The program runs as a daemon and periodically will dump all information collected to the 
-  database. In future more databases will be available, and writing the code for our own
-  needs is not difficult at all, as the dump is done using a FIFO and a program that is 
-  specified in the configuration file.
-  
-  An Example:
-  Currently this program is being developed for a big student network (AG-DSN) connected 
-  to the university TU-Dresden over a 100MBit FX-cable. We have 8 subnets (S0..S7) and would
-  like to connect data for University-Intern traffic (UN-INT), but not Student-intern-traffic, and 
-  University-extern traffic (UN-Ext).
-  so we have to rules, the first accounting everything for hosts in S0..S7 and going to UN-INT, 
-  and the second, accounting everything for S0..S7 going to UN-EXT. But out database will only hold 
-  information about hosts in S0..S7, reducing a lot the size of our database, which can grow quiet
-  big, if you consider that we have 1200 users. Every 5 minutes the data is dumped into a Mysql-Database. 
-  our Data is collected on a daily base. The conversion is done by the dumping-program, 
-  so that no additional scripts are needed neither no further processing.
+  database, syslog or a file.
    
+
 UPDATE
   
   Update-information can be found in file UPDATE
+
 
 INSTALLATION / PRECONDITIONS
   
@@ -42,13 +30,36 @@ INSTALLATION / PRECONDITIONS
   kernel versions and different distributions. You must pay attention if you compile your kernel. 
   keep in mind that the option CONFIG_PACKET must be compiled in. Generally, if tcpdump works, Traff
   should work as well.
-  What you will need is pcap- and Mysql- libraries and header files to compile Traff.
+  What you will need is pcap- and optionally Mysql- and PgSQL- libraries and header files to compile Traff.
   If all preconditions are met you can begin by
 
     1. unpacking the sources 
-    2. changing to that directory and type make
-    3. type make install
-    4. start the programm running /etc/init.d/traff start
+    2. Edit the Makefile-file
+       - if you want to compile Traff with PgSQL-support exchange the lines
+           CFLAGS = -g -D_REENTRANT -DwithMYSQL -DwithPGSQL
+           LFLAGS =  -lpcap -lpthread -lpq -lmysqlclient
+         to
+           CFLAGS = -g -D_REENTRANT -DwithPGSQL
+           LFLAGS =  -lpcap -lpthread -lpq
+       - if you want to have mysql-support change the lines to
+           CFLAGS = -g -D_REENTRANT -DwithMYSQL
+           LFLAGS =  -lpcap -lpthread -lmysqlclient
+       - and if you want no SQL-support at all:
+           CFLAGS = -g -D_REENTRANT
+           LFLAGS =  -lpcap -lpthread
+
+    3. changing to that directory and type make
+    4. type make install
+       Make install will copy binary files to /usr/local/sbin. If you don like this, edit
+       the Makefile or install manually.
+    5. Change he configuration-file /etc/traff.conf to suit to your needs
+    6. Start traff.
+
+    7. -Optionally- 
+       There is a initd-script for traff called traff.initd. This script was intended to run
+       on Debian systems. You my need to change it if you use another distribution. With this script 
+       you can configure you system to start traff at boot-time. Please remember to start traff only 
+       _after_ you set up your network.
 
 
 BUGS/UPDATES
@@ -61,12 +72,18 @@ BUGS/UPDATES
 
 
 CONTRIBUTIONS
-  
+
   Contributions are welcome. Please sent to to me via email.
+
+TODO
+  - Make traff to read command-line arguments (ex.: -f <configuration-file>)
+  - Make a ./configure script
+  - Test it and see if it works correctly :)
 
 COPYRIGHT
  
-  Copyright (C) 2001 - Hans Marcus Krüger
+  Copyright (C) 2001 - Hans Marcus Krüger <hanskruger@iname.com>, 
+  
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
