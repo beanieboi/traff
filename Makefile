@@ -53,5 +53,5 @@ traff_stdout_dump.o : traff_stdout_dump.c
 
 clean :
 	rm -f *~
-	rm -f $(MODULES) $(MODULES_1) $(MODULES_2)
-	rm -f $(EXECUTABLE) $(EXECUTABLE_1) $(EXECUTABLE_2)
+	rm -f $(MODULES) $(MODULES_STDOUT) $(MODULES_MYSQL)
+	rm -f $(EXECUTABLE) $(EXECUTABLE_STDOUT) $(EXECUTABLE_MYSQL)

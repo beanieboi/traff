@@ -1,36 +1,36 @@
-	Traff - Traffic Accounting Programm
+	Traff - Traffic Accounting Program
 	Version 0.3
 	(c) 2001 - Hans Marcus Krüger
 	
 
 WHAT IS IT? 
 
-  Traff is a programm that attaches itself to ine or more network interfaces, 
-  sniffs all IP-packeges passing at it and accounts each packets size. The collected 
+  Traff is a program that attaches itself to one or more network interfaces, 
+  sniffs all IP-packages passing at it and accounts each packets size. The collected 
   information can be dumped to a mysql-Database, for further processing.
 
 HOW DOES IT WORK?
-  The whole thing about traff, is that you can specify for what ip you want to account 
-  the traffic, and even for what ips talking with witch peer. This means, that if you 
+  The whole thing about Traff, is that you can specify for what IP you want to account 
+  the traffic, and even for what IPs talking with witch peer. This means, that if you 
   have a big uplink and you want to discover how much each or some hosts on your network 
-  are using this uplink, you can do that without caring about the other ip, as other 
+  are using this uplink, you can do that without caring about the other IP, as other 
   programs do. So much less data will be stored at your database.
-  The prgramm runs as a deamon and periodicaly will dump all information collected to the 
-  database. In futere more databeses will be availibel, and writing the code for our own
-  needs ist not difficult at all, as the dump is done using a FIFO and a programm that is 
-  specified in the configutration file.
+  The program runs as a daemon and periodically will dump all information collected to the 
+  database. In future more databases will be available, and writing the code for our own
+  needs is not difficult at all, as the dump is done using a FIFO and a program that is 
+  specified in the configuration file.
   
   An Example:
-  Currently this programm is beeing developed for a big student network (AG-DSN) connected 
+  Currently this program is being developed for a big student network (AG-DSN) connected 
   to the university TU-Dresden over a 100MBit FX-cable. We have 8 subnets (S0..S7) and would
   like to connect data for University-Intern traffic (UN-INT), but not Student-intern-traffic, and 
   University-extern traffic (UN-Ext).
-  so we have to rules, the first accounting everythig for hots in S0..S7 and going to UN-INT, 
-  and the second, accounting everytinh fo S0..S7 going tu UN-EXT. But out database will only hold 
-  infoirmation about hosts in S0..S7, reducing a lot the size of our database, which can grow quiet
-  big, if you consider that we have 1200 users. Every 5 minutes the data is dumped into a MySQL-Database. 
-  our Data is collected on a dailybase. The conversion is done by the dumping-programm, 
-  so that no aditional scripts are needed neither no further processing.
+  so we have to rules, the first accounting everything for hosts in S0..S7 and going to UN-INT, 
+  and the second, accounting everything for S0..S7 going to UN-EXT. But out database will only hold 
+  information about hosts in S0..S7, reducing a lot the size of our database, which can grow quiet
+  big, if you consider that we have 1200 users. Every 5 minutes the data is dumped into a Mysql-Database. 
+  our Data is collected on a daily base. The conversion is done by the dumping-program, 
+  so that no additional scripts are needed neither no further processing.
    
 UPDATE
   
@@ -38,11 +38,11 @@ UPDATE
 
 INSTALLATION / PRECONDITIONS
   
-  The script is beeing developed under Debian running kernel 2.4.x, but it should run on diferent 
+  The script is being developed under Debian running kernel 2.4.x, but it should run on different 
   kernel versions and different distributions. You must pay attention if you compile your kernel. 
-  keep in mind that the option CONFIG_PACKET must be compiled in. Generaly, if tcpdump works, traff
+  keep in mind that the option CONFIG_PACKET must be compiled in. Generally, if tcpdump works, Traff
   should work as well.
-  What you will need is pcap- and Mysql- libaries and header files to compile traff.
+  What you will need is pcap- and Mysql- libraries and header files to compile Traff.
   If all preconditions are met you can begin by
 
     1. unpacking the sources 
@@ -51,22 +51,22 @@ INSTALLATION / PRECONDITIONS
     4. copy all executables to /usr/local/sbin
     5. copy traff.initd to /etc/init.d/traff or the equivalent directory on your system
     6. set up your mysql-database
-    7. start the programm with /etc/init.d/traff start
+    7. start the program with /etc/init.d/traff start
   
-  As Time goes by I will automate intallation an add more detailed inforamtion here.
+  As Time goes by I will automate installation an add more detailed information here.
 
 BUGS/UPDATES
 
-  Please report any bugs directly to me via email. Updates and new versions can be optained 
+  Please report any bugs directly to me via email. Updates and new versions can be obtained 
   at the projects repository at sourceforge.net.
 
-  For the very new versions use the CVS-Versions. Information about this can also be optained at
+  For the very new versions use the CVS-Versions. Information about this can also be obtained at
   the projects repository at sourceforge.net.
 
 
 CONTRIBUTIONS
   
-  Cntributions are wellcome. Please sent to to me via email.
+  Contributions are welcome. Please sent to to me via email.
 
 COPYRIGHT
  
