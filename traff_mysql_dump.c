@@ -25,8 +25,8 @@
 #include "readconfig.h"
 
 #define QUERYLENGTH 1024
-#define DEBUG(s) s; 
-
+//#define DEBUG(s) printf("%s(%d): ","traff_mysql_dump",getpid()); s; 
+#define DEBUG(s)
 
 void cipa(unsigned int ip, unsigned char cip[]);
 
@@ -87,11 +87,11 @@ int main (int argc, char *argv[]) {
         printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
         exit(1);
       }
-      DEBUG(printf("%s\n",mysql_error(&mysql));)  
+      DEBUG(printf("Error: %s, Affected Rows: %d\n",mysql_error(&mysql), mysql.affected_rows );)  
       if (! mysql.affected_rows) {
-	snprintf(query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%d,%d,%d)",cat->sql->table,cip[0],cip[1],cip[2],cip[3],timetag,input,output);
+      	snprintf(query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%d,%d,%d)",cat->sql->table,cip[0],cip[1],cip[2],cip[3],timetag,input,output);
         DEBUG(printf("First entry: using query:  %s\n",query);)
-	mysql_query(&mysql,query);
+	      mysql_query(&mysql,query);
         DEBUG(printf("%s\n",mysql_error(&mysql));)  
       
       }

@@ -29,7 +29,7 @@
 #include "data.h"
 //#include "ip_table.h"
 
-#define DEBUG(s) s
+#define DEBUG(s) 
 
 //------------------------------------------------------------------------------------
 void data_dump(t_cat *cat){

@@ -40,10 +40,8 @@ mysql : $(MODULES_MYSQL)
 
 install : 
 	install -m 755 traff traff_mysql_dump traff_stdout_dump $(BINDIR)
-	install -m 755 traff.conf $(ETCDIR)
-	install -m 755 traff.initd $(ETCDIR)/init.d/traff
-	
-
+	if ! test -e $(ETCDIR)/traff.conf; then  install -m 550 traff.conf $(ETCDIR); fi
+	install -m 755 traff.initd $(ETCDIR)/init.d/traff;
 
 traff.o      : traff.c
 readconfig.o : readconfig.c
