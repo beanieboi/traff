@@ -28,6 +28,8 @@
 #include "readconfig.h"
 
 #define QUERYLENGTH 1024
+#define DEBUG(s) 
+
 
 void cipa(unsigned int ip, unsigned char cip[]);
 
@@ -45,8 +47,11 @@ int main (int argc, char *argv[]) {
 //  if (argc != 3) exit(1);
   
 //  config_init(config,argv[3]); 
-  config_init(config,argv[3]); 
 
+  DEBUG(printf("Debuging Mode Enabled\n");)
+  DEBUG(printf("Openning Configugariotn file %s...\n", argv[3]);)
+  config_init(config,argv[3]); 
+  
   cat = config->cats;
   while(strcmp(cat->name,argv[2])) 
     cat = cat->next;
@@ -76,17 +81,22 @@ int main (int argc, char *argv[]) {
   while(read(fifo, &data, sizeof(t_data))) {
     if (data.input || data.output) {
       cipa(data.ip, cip);
-      snprintf(query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\"%d.%d.%d.%d\" and timetag=%d",cat->sql->table,input,output,cip[0],cip[1],cip[2],cip[3],timetag);
       input = (int) data.input / cat->bytedivider;
       output = (int) data.output / cat->bytedivider;
+      snprintf(query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\"%d.%d.%d.%d\" and timetag=%d",cat->sql->table,input,output,cip[0],cip[1],cip[2],cip[3],timetag);
+      DEBUG(printf("Query: %s\n", query);)
     
       if (mysql_query(&mysql,query)){
         printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
         exit(1);
       }
+      DEBUG(printf("%s\n",mysql_error(&mysql));)  
       if (! mysql.affected_rows) {
-        snprintf(query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%d,%d,%d)",cat->sql->table,cip[0],cip[1],cip[2],cip[3],timetag,input,output);
-        mysql_query(&mysql,query);
+	snprintf(query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%d,%d,%d)",cat->sql->table,cip[0],cip[1],cip[2],cip[3],timetag,input,output);
+        DEBUG(printf("First entry: using query:  %s\n",query);)
+	mysql_query(&mysql,query);
+        DEBUG(printf("%s\n",mysql_error(&mysql));)  
+      
       }
 
     }

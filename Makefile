@@ -6,7 +6,7 @@ CC = gcc
 
 # fuer i386 auskommentieren
 CFLAGS= -g -D_REENTRANT
-LFLAGS = -lncurses -lpcap -lpthread
+LFLAGS = -lpcap -lpthread
 LFLAGS_MYSQL = -lmysqlclient
 
 MODULES = traff.o readconfig.o data.o ip_table.o
