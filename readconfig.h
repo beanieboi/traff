@@ -2,7 +2,7 @@
 #ifndef READCONFIG_H
 #define READCONFIG_H
 
-#define TEXTLEN 8 
+#define TEXTLEN 16 
 #define FILELENGTH 30
 #define DEBUG
 
@@ -62,8 +62,9 @@ typedef struct t_data {
 } t_data;      
 
 
-void config_init(t_config * config,char * filename);
-void test_init(t_config * config);
+t_config * config_init(t_config * config,char * filename);
+int config_read_config_file(t_config * config,char * filename);
+void config_destroy(t_config * config);
 
 
 

@@ -9,7 +9,7 @@ CFLAGS= -g -D_REENTRANT
 LFLAGS = -lncurses -lpcap -lpthread
 
 MODULES = traff.o readconfig.o data.o ip_table.o
-MODULES_1 = traff_stdout_dump.o
+MODULES_1 = traff_stdout_dump.o readconfig.o
 #MODULES_2 = fahren.o semaphore.o
 
 EXECUTABLE = traff
@@ -23,6 +23,9 @@ all: $(EXECUTABLE) $(EXECUTABLE_1)
 
 $(EXECUTABLE) :	$(MODULES)
 	$(CC) $(CFLAGS) $(MODULES) -o $(EXECUTABLE) $(LFLAGS)
+
+$(EXECUTABLE_1) :	$(MODULES_1)
+	$(CC) $(CFLAGS) $(MODULES_1) -o $(EXECUTABLE_1) $(LFLAGS)
 
 traff.o      : traff.c
 readconfig.o : readconfig.c

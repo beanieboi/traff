@@ -35,12 +35,13 @@
 //------------------------------------------------------------------------------------
 void data_dump(t_cat *cat){
   extern int errno;
-  char fifo_file[] = "/tmp/traff-fifo";
+  char * fifo_file;
   t_data * data = 0;
   int fifo;
   pid_t child;
+ 
+  fifo_file = tempnam(0,"traff");
   
-//  signal(SIGCHLD, SIG_IGN);
   mkfifo(fifo_file,0600);
 
   //fprintf(stderr, "Going to fork\n");

@@ -199,24 +199,24 @@ int main (int argc, char *argv[]) {
       if (! cycle) dt = 0; // when cycle is set to 0 we will make a dump and no longer cycle
 
       if (dumping) {
-        printf("Trying to dump while other dump is active");
-        exit(0);
-      }
-
-      cat = config->cats;                                                                      
-      while (cat) {                                                                                    
-        thread_cat = malloc(sizeof(t_cat));
-        memcpy(thread_cat, cat,sizeof(t_cat));
-        //thread_cat->table = cat->table;
-        data_init(cat);      
-        //fprintf(stderr, "Old table: %x, new table %x\n",thread_cat->table,cat->table);
-        pthread_create(&thread, &pthread_attr_detach, (void*)&dump, (void*) thread_cat);
-//        pthread_detach(thread);
-        // now associate a new table to the category. The thread will be responseble for 
-        // destroying the old one
-        cat = cat->next;
-      }
-    } 
+        printf("Trying to dump while other dump is active. Ignoring this dump");
+      } else {
+ 
+       cat = config->cats;                                                                      
+       while (cat) {                                                                                    
+         thread_cat = malloc(sizeof(t_cat));
+         memcpy(thread_cat, cat,sizeof(t_cat));
+         //thread_cat->table = cat->table;
+         data_init(cat);      
+         //fprintf(stderr, "Old table: %x, new table %x\n",thread_cat->table,cat->table);
+         pthread_create(&thread, &pthread_attr_detach, (void*)&dump, (void*) thread_cat);
+//         pthread_detach(thread);
+         // now associate a new table to the category. The thread will be responseble for 
+         // destroying the old one
+         cat = cat->next;
+       } //while (cat) 
+      } //if (dumping)
+    } //if ((dt + config->cycletime < time(0)) || ! cycle )
 
     devices = devices->next;
 

@@ -28,17 +28,18 @@
 
 void cipa(unsigned int ip, unsigned char cip[]);
 
-
 //-----------------------------------------------------------------------------------
 int main (int argc, char *argv[]) {
-//  t_config * config = (t_config *) malloc(sizeof(t_config));
+  t_config * config = (t_config *) malloc(sizeof(t_config));
   t_cat * cat = 0;                                                                      
   int i,fifo;
   unsigned char cip[4];
   t_data data;
   extern int errno;
   //fprintf(stderr,"Fifo Filename: %s Category %s\n", argv[1],argv[2]);
- 
+
+  config_init(config,"/tmp/traff.conf"); // this function will initialize configuration            
+  
   if ( (fifo = open(argv[1],O_RDONLY)) == -1 ) {
     fprintf(stderr, "%s: Cat: %s: Error opening fifo %s for reading.\nError: %s\n",argv[0],argv[2],argv[1],strerror(errno));
     exit(1);
@@ -49,8 +50,7 @@ int main (int argc, char *argv[]) {
   }
   close(fifo);
   sleep(2);
-//  unlink(argv[2]);
- 
+  unlink(argv[2]);
 } // main
 //-----------------------------------------------------------------------------------
 void cipa(unsigned int ip, unsigned char cip[]) {
@@ -59,5 +59,3 @@ void cipa(unsigned int ip, unsigned char cip[]) {
   cip[2] = ((ip<<16)>>24);
   cip[3] = ((ip<<24)>>24);
 }
-
-
