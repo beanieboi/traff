@@ -1,0 +1,12 @@
+
+Traff 0.5 (Fri Sep 14 18:56:26 BRT 2001)
+========================================
+- Added alpha version of postgreSQL dumping module
+- Traff now forks for each device once.
+- Data is first stored into a buffer. Periodically this 
+  buffer is transcripted to the table and again periodically
+  dumped to the database
+- First trys to pass PPID to mysql_traff_dump, sop when a error occors,
+  mysql_traff_dump can kill ist parrent. 
+
+Starting with version 0.5
