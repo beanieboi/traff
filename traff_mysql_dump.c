@@ -24,7 +24,10 @@
 #include <fcntl.h>
 #include <time.h>
 #include <netinet/in.h>
+#include <mysql/mysql.h>
 #include "readconfig.h"
+
+#define QUERYLENGTH 1024
 
 void cipa(unsigned int ip, unsigned char cip[]);
 
@@ -32,22 +35,64 @@ void cipa(unsigned int ip, unsigned char cip[]);
 int main (int argc, char *argv[]) {
   t_config * config = (t_config *) malloc(sizeof(t_config));
   t_cat * cat = 0;                                                                      
-  int i,fifo;
+  int i,fifo,timetag,input,output;
   unsigned char cip[4];
   t_data data;
   extern int errno;
+  MYSQL mysql;
+  char query[QUERYLENGTH];
   //fprintf(stderr,"Fifo Filename: %s Category %s\n", argv[1],argv[2]);
-
-  config_init(config,"/etc/traff.conf"); // this function will initialize configuration            
+//  if (argc != 3) exit(1);
   
+//  config_init(config,argv[3]); 
+  config_init(config,argv[3]); 
+
+  cat = config->cats;
+  while(strcmp(cat->name,argv[2])) 
+    cat = cat->next;
+  if (!cat)
+    fprintf(stderr,"Did not fount Cat %s ind file %s\n",argv[2],argv[3]);
+  
+  mysql_init(&mysql);
+  mysql_connect(&mysql,cat->sql->host,cat->sql->user,cat->sql->password);
+  if (mysql_errno(&mysql)) {
+    printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+    exit(1);
+  }
+  mysql_select_db(&mysql,cat->sql->db); 
+  if (mysql_errno(&mysql)) {
+    printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+    exit(1);
+  }
+
   if ( (fifo = open(argv[1],O_RDONLY)) == -1 ) {
     fprintf(stderr, "%s: Cat: %s: Error opening fifo %s for reading.\nError: %s\n",argv[0],argv[2],argv[1],strerror(errno));
     exit(1);
   }
+
+  if (cat->timedivider) timetag = (int) time(0) / cat->timedivider;
+  else timetag = time(0);
+  
   while(read(fifo, &data, sizeof(t_data))) {
-    cipa(data.ip, cip);
-    fprintf(stdout, "%03d.%03d.%03d.%03d %d %d\n", cip[0],cip[1],cip[2],cip[3], data.input, data.output);
+    if (data.input || data.output) {
+      cipa(data.ip, cip);
+      snprintf(query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\"%d.%d.%d.%d\" and timetag=%d",cat->sql->table,input,output,cip[0],cip[1],cip[2],cip[3],timetag);
+      input = (int) data.input / cat->bytedivider;
+      output = (int) data.output / cat->bytedivider;
+    
+      if (mysql_query(&mysql,query)){
+        printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+        exit(1);
+      }
+      if (! mysql.affected_rows) {
+        snprintf(query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%d,%d,%d)",cat->sql->table,cip[0],cip[1],cip[2],cip[3],timetag,input,output);
+        mysql_query(&mysql,query);
+      }
+
+    }
   }
+  
+  mysql_close(&mysql);
   close(fifo);
   sleep(2);
   unlink(argv[2]);
