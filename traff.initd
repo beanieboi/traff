@@ -1,0 +1,35 @@
+#! /bin/sh
+
+
+test -x /usr/local/sbin/traff || exit 0
+
+# Configurable options:
+
+case "$1" in
+  start)
+        echo -n "Starting Traffic Accounting Programm: traff"
+	start-stop-daemon --start --quiet --pidfile /var/run/traff.pid -b -m --exec /usr/local/sbin/traff
+        echo "."
+	;;
+  stop)
+        echo -n "Stopping Traffic Accounting Programm: traff"
+	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/traff.pid --exec /usr/local/sbin/traff
+        rm /var/run/traff.pid
+        echo "."
+	;;
+
+  restart)
+        echo -n "Restartffic Accounting Programm: traff"
+	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/traff.pid --exec /usr/local/sbin/traff
+        rm /var/run/traff.pid
+        sleep 10
+	start-stop-daemon --start --quiet --pidfile /var/run/traff.pid -m -b --exec /usr/local/sbin/traff
+	echo "."
+	;;
+
+  *)
+	echo "Usage: /etc/init.d/traff {start|stop|restart}"
+	exit 1
+esac
+
+exit 0
