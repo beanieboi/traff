@@ -76,6 +76,6 @@ t_config * config_init(t_config * config,char * filename);
 int config_read_config_file(t_config * config,char * filename);
 void config_destroy(t_config * config);
 
-
+char conf_file[FILELENGTH];
 
 #endif

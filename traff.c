@@ -69,6 +69,7 @@ int info = 0;     // If this is set some information will be dumped to stderr
 int dumping = 0;  // This holds the number od thrteads that are dumping information.
 int dt = 0;       // dt stores the last time a dump was done. It must be global so a dump can be triggered by a signal
 
+
 //-----------------------------------------------------------------------------------
 int main (int argc, char *argv[]) {
   t_config * config = (t_config *) malloc(sizeof(t_config));
@@ -103,7 +104,7 @@ int main (int argc, char *argv[]) {
   pthread_attr_setdetachstate(&pthread_attr_detach, PTHREAD_CREATE_DETACHED);
   dt = time(0);
   // reading config file
-  config_init(config,"/tmp/traff.conf"); // this function will initialize configuration
+  config_init(config,"/etc/traff.conf"); // this function will initialize configuration
   // inititlizing Pcap
   devices = config->devices;
   for (i = 0; i < config->devicecount; i++)  {

@@ -35,6 +35,7 @@
 //------------------------------------------------------------------------------------
 void data_dump(t_cat *cat){
   extern int errno;
+  extern char conf_file[];
   char * fifo_file;
   t_data * data = 0;
   int fifo;
@@ -48,7 +49,7 @@ void data_dump(t_cat *cat){
   child = fork();
    
   if (child == 0) {
-    if (execl(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,0) != 0 ) fprintf(stderr, "Error executing programm %s\nError: %s\n",cat->dump_programm,strerror(errno));
+    if (execl(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,0) != 0 ) fprintf(stderr, "Error executing programm %s\nError: %s\n",cat->dump_programm,strerror(errno));
     pthread_exit(0);
   } else if (child < 0) {
      fprintf(stderr, "Traff Dump Cat: %s: Error while forking at datadump\n",cat->name);

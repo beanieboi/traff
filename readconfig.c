@@ -53,12 +53,16 @@ unsigned int ipstrtoint(char * ipstr);
 void test_init(t_config * config);
 //---------------------------------------------------------------------------------
 t_config * config_init(t_config * config,char * filename) {
+
   // initializing config
   config->cycletime = 600;
   config->devices = 0;
   config->cats = 0;
   config->devicecount = 0;
-        
+  
+  bzero(conf_file,FILELENGTH);
+  strncpy(conf_file,filename,FILELENGTH);
+  
   //test_init(config);
   config_read_config_file(config, filename);
   
