@@ -25,7 +25,7 @@
 #include "readconfig.h"
 
 #define QUERYLENGTH 1024
-#define DEBUG(s) 
+#define DEBUG(s) s; 
 
 
 void cipa(unsigned int ip, unsigned char cip[]);

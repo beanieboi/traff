@@ -205,8 +205,8 @@ int config_read_config_file(t_config * config,char * filename) {
              fprintf(stderr,"Traff: Reading Cat-option %s outside a Cat, in file %s, line %d.\n",keyword,filename,linenum);
              exit(1);
            }
-           if (!active_cat->sql) active_cat->sql = malloc(sizeof(t_sql));
-           active_cat->sql = malloc(sizeof(t_sql));
+//           if (!active_cat->sql) active_cat->sql = (t_sql *)  malloc(sizeof(t_sql));
+           active_cat->sql = (t_sql *) malloc(sizeof(t_sql));
            bzero(active_cat->sql->host, LONGTEXT);
            bzero(active_cat->sql->db, LONGTEXT);
            bzero(active_cat->sql->table, LONGTEXT);

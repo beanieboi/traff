@@ -29,6 +29,8 @@
 #include "data.h"
 //#include "ip_table.h"
 
+#define DEBUG(s) s
+
 //------------------------------------------------------------------------------------
 void data_dump(t_cat *cat){
   extern int errno;
@@ -46,7 +48,9 @@ void data_dump(t_cat *cat){
   child = fork();
    
   if (child == 0) {
-    if (execlp(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,parrent,0) != 0 ) fprintf(stderr, "Error executing programm %s\nError: %s\n",cat->dump_programm,strerror(errno));
+    DEBUG(printf("Child calling execlp(%s,%s,%s,%s,%s,0)",cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file););
+    if (execlp(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,0) != 0 ) 
+        fprintf(stderr, "Error executing programm %s\nCalling Error %d: %s\n",cat->dump_programm,errno, strerror(errno));
     pthread_exit(0);
   } else if (child < 0) {
      fprintf(stderr, "Traff Dump Cat: %s: Error while forking at datadump\n",cat->name);

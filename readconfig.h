@@ -2,10 +2,10 @@
 #ifndef READCONFIG_H
 #define READCONFIG_H
 
-#define TEXTLEN 16 
-#define FILELENGTH 30
-#define LONGTEXT 30
-#define DEBUG
+#define TEXTLEN 32 
+#define FILELENGTH 1024
+#define LONGTEXT 32
+//#define DEBUG
 
 #include <pcap.h> 
 #include <pthread.h> 
