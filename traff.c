@@ -182,6 +182,17 @@ int main (int argc, char *argv[]) {
     // REmember that devices is a RING-List: The last element points to the first. If Only
     // one element exists it will point to itselv.
 
+    // This prints some information on the screen.
+    if (info) {
+      print_config(config);
+      cat = config->cats;
+      while(cat) {
+        data_print_info(cat);
+        cat = cat->next;
+      }
+      info = 0;
+    }
+    
     // check if we should dump informatoion again
     if ((dt + config->cycletime < time(0)) || ! cycle ) { 
       dt = time(0);
@@ -198,6 +209,7 @@ int main (int argc, char *argv[]) {
         memcpy(thread_cat, cat,sizeof(t_cat));
         //thread_cat->table = cat->table;
         data_init(cat);      
+        //fprintf(stderr, "Old table: %x, new table %x\n",thread_cat->table,cat->table);
         pthread_create(&thread, &pthread_attr_detach, (void*)&dump, (void*) thread_cat);
 //        pthread_detach(thread);
         // now associate a new table to the category. The thread will be responseble for 
@@ -206,18 +218,8 @@ int main (int argc, char *argv[]) {
       }
     } 
 
-    if (info) {
-      print_config(config);
-
-      cat = config->cats;
-      while(cat) {
-        data_print_info(cat);
-        cat = cat->next;
-      }
-       
-      info = 0;
-    }
     devices = devices->next;
+
   } // while (cycle)
 
   // Cleaning up
@@ -236,9 +238,11 @@ int main (int argc, char *argv[]) {
 } // main
 //-----------------------------------------------------------------------------------
 void dump(t_cat * cat) {
+  //fprintf(stderr, "dump: Staring dump\n");
   dumping++;
   data_dump(cat);
   dumping--;
+  //fprintf(stderr, "dump: Dump done\n");
   pthread_exit(0);
 }
 //-----------------------------------------------------------------------------------

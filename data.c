@@ -25,7 +25,7 @@
 #include <signal.h>
 //#include <limits.h>
 //#include <unistd.h>
-//#include <fcntl.h>
+#include <fcntl.h>
 //#include <time.h>
 //#include <netinet/in.h>
 #include "readconfig.h"
@@ -34,26 +34,44 @@
 
 //------------------------------------------------------------------------------------
 void data_dump(t_cat *cat){
+  extern int errno;
   char fifo_file[] = "/tmp/traff-fifo";
-  FILE fifo;
+  t_data * data = 0;
+  int fifo;
   pid_t child;
   
-  signal(SIGCHLD, SIG_IGN);
+//  signal(SIGCHLD, SIG_IGN);
   mkfifo(fifo_file,0600);
 
-  fprintf(stderr, "Going to fork\n");
+  //fprintf(stderr, "Going to fork\n");
   child = fork();
    
   if (child == 0) {
-    if (execlp(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,0) != 0 ) fprintf(stderr, "Error executing programm %s",cat->dump_programm);
-    exit(0);
-  } else if (child > 0) {
-    fprintf(stderr, "Parrent\n");
-    
-  } else
-     fprintf(stderr, "Error while forking at datadump\n");
-  
-  
+    if (execl(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,0) != 0 ) fprintf(stderr, "Error executing programm %s\nError: %s\n",cat->dump_programm,strerror(errno));
+    pthread_exit(0);
+  } else if (child < 0) {
+     fprintf(stderr, "Traff Dump Cat: %s: Error while forking at datadump\n",cat->name);
+     pthread_exit(0);
+  }
+
+  if ( (fifo = open(fifo_file,O_WRONLY)) == -1  ) {
+    fprintf(stderr, "Traff Dump Cat: %s: Error opening fifo %s for writing.\nError: %s",cat->name,fifo_file, strerror(errno));
+    kill(child, SIGTERM);
+    pthread_exit(0);      
+  }
+
+  data = (t_data *) ip_table_fetch_next(cat->table,0);
+  while (data) {
+    if(write(fifo, data, sizeof(t_data)) != sizeof(t_data)) {
+      fprintf(stderr, "Traff Dump Cat: %s: Error dumping data.\n",cat->name);
+    }
+    if (data->ip != 0xffffffff) {
+      data = (t_data *) ip_table_fetch_next(cat->table,data->ip+1);
+    } else data = 0;
+  }
+
+  close(fifo);
+  //fprintf(stderr, "Going to destroy table\n");  
   data_destroy_table(cat->table);
   free(cat);
 }
@@ -66,6 +84,8 @@ void data_destroy_table(void* table) {
   unsigned int ip = 0;
   unsigned char cip[4];                                                                            
 
+  //fprintf(stderr, "data_destroy_table: FEtching first entry\n");  
+  //fprintf(stderr, "entries in table: %d\n",ip_table_count(table));
   data = (t_data *) ip_table_fetch_next(table,0);
   while (data) {
     //lets cycle throught the table...
@@ -78,8 +98,9 @@ void data_destroy_table(void* table) {
     } else data = 0;
   }
   // noe we can ask ip_table to free the rest
+  //fprintf(stderr, "data_destroy_table: passing over to ip_table_destroy_table\n");  
   ip_table_destroy_table(table,0);
-  free(table);    
+  //free(table);    
 }
 //------------------------------------------------------------------------------------
 int data_match_rule(t_ip_filter *filter,  t_raw_data * data, int i) {

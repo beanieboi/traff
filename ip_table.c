@@ -35,14 +35,19 @@ int ip_table_destroy_table(t_IP_MAG * mag, int level) {
   // This function will cycle through the table and destroy it, exept if one ip-entry exists.
   // This means that this modules is not responsible for destroying the data that is stored in the table
   int i;
-        
-  if (level < LEVEL) {
+ 
+  if (!mag) return 0;
+  
+  if (level < LEVEL-1) {
     // We arte not at the botton yet!
     for (i = 0; i < IP_MAG_MAX; i++) {
+      //fprintf(stderr,"ip_table_destroy_table: level: %d i: %3d mag[i]: %x\n",level,i,mag);
+     
       if ((*mag)[i]) {
         // Firts let the recusrsiondestroy any pointer under this level
         ip_table_destroy_table((t_IP_MAG*)(*mag)[i], level+1);
         // now relaese memory an set to null
+        //fprintf(stderr,"ip_table_destroy_table: level: %d i: %3d mag[i]: %x -- freeing\n",level,i,mag);
         free((t_IP_MAG*)(*mag)[i]);
         (*mag)[i] = 0;
       }
@@ -52,7 +57,11 @@ int ip_table_destroy_table(t_IP_MAG * mag, int level) {
     // If we discover one not-null pointer we will abbort freeing the table as this is not 
     // the duty of this function
     for (i = 0; i < IP_MAG_MAX; i++) {
-      if ((*mag)[i]) return 1;
+      //fprintf(stderr,"ip_table_destroy_table: level: %d i: %3d ptr[i]: %x\n",level,i,mag);
+      if ((*mag)[i]) {
+        fprintf(stderr,"Error: IP_table: Last level with not-null pointer\n");       
+        return 1;
+      }
     }
   }
   if (level == 0) free((t_IP_MAG*)mag);
@@ -66,10 +75,12 @@ t_IP_MAG * ip_table_init() {
 }
 //----------------------------------------------------------------------------------
 void * ip_table_fetch_next(t_IP_MAG * root, unsigned int ip){
-  unsigned int next = ip;
+  unsigned int *next;
+  next=malloc(sizeof(unsigned int));
+  *next = ip;
   if (!root) return 0;                                                                             
-  return ip_table_get_next_entry(root, 0, &next); 
-
+  return ip_table_get_next_entry(root, 0, next); 
+  free(next);
 }
 //----------------------------------------------------------------------------------
 void * ip_table_get_next_entry(t_IP_MAG * mag, int level, unsigned int * next) {
@@ -112,6 +123,8 @@ void * ip_table_get_next_entry(t_IP_MAG * mag, int level, unsigned int * next) {
   // that for went strait to the end of this mag, and did not find anything. The next mag of this
   // level must be searched from the beginning.
   ip_table_regen_next(0,level,next);
+  
+  // and if we find nothing, return 0
   return 0;
   
 }
