@@ -76,10 +76,10 @@ int main (int argc, char *argv[]) {
   else timetag = time(0);
   
   while(read(fifo, &data, sizeof(t_data))) {
-    if (data.input || data.output) {
+    input = (int) data.input / cat->bytedivider;
+    output = (int) data.output / cat->bytedivider;
+    if (input || output) {
       cipa(data.ip, cip);
-      input = (int) data.input / cat->bytedivider;
-      output = (int) data.output / cat->bytedivider;
       snprintf(query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\"%d.%d.%d.%d\" and timetag=%d",cat->sql->table,input,output,cip[0],cip[1],cip[2],cip[3],timetag);
       DEBUG(printf("Query: %s\n", query);)
     
