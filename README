@@ -33,7 +33,7 @@ INSTALLATION / PRECONDITIONS
   What you will need is pcap- and optionally Mysql- and PgSQL- libraries and header files to compile Traff.
   If all preconditions are met you can begin by
 
-    1. unpacking the sources 
+    1. Unpacking the sources 
     2. Edit the Makefile-file
        - if you want to compile Traff with PgSQL-support exchange the lines
            CFLAGS = -g -D_REENTRANT -DwithMYSQL -DwithPGSQL
@@ -47,15 +47,16 @@ INSTALLATION / PRECONDITIONS
        - and if you want no SQL-support at all:
            CFLAGS = -g -D_REENTRANT
            LFLAGS =  -lpcap -lpthread
-
-    3. changing to that directory and type make
-    4. type make install
+  
+    3. Check in readconfig.h if the PgSQL and/or MySQL inlcude headers are correct for your system.
+    4. Changing to that directory and type make
+    5. Type make install
        Make install will copy binary files to /usr/local/sbin. If you don like this, edit
        the Makefile or install manually.
-    5. Change he configuration-file /etc/traff.conf to suit to your needs
-    6. Start traff.
+    6. Change he configuration-file /etc/traff.conf to suit to your needs
+    7. Start traff.
 
-    7. -Optionally- 
+    8. -Optionally- 
        There is a initd-script for traff called traff.initd. This script was intended to run
        on Debian systems. You my need to change it if you use another distribution. With this script 
        you can configure you system to start traff at boot-time. Please remember to start traff only 
