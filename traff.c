@@ -147,6 +147,8 @@ int main (int argc, char *argv[]) {
       //setting values in data to be passed later on
       data.ip[0]  = ((ip_pkt->srcip[0] << 24) + (ip_pkt->srcip[1] << 16) + (ip_pkt->srcip[2] << 8) + ip_pkt->srcip[3]);
       data.ip[1]  = ((ip_pkt->dstip[0] << 24) + (ip_pkt->dstip[1] << 16) + (ip_pkt->dstip[2] << 8) + ip_pkt->dstip[3]);
+      data.port[0]  = ((ip_pkt->srcpt[0] << 8) + ip_pkt->srcpt[1]);
+      data.port[1]  = ((ip_pkt->dstpt[0] << 8) + ip_pkt->dstpt[1]);
       data.length = (ip_pkt->length[0] *256 + ip_pkt->length[1]);
       data.prot  = ip_pkt->prot[0];
   

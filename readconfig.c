@@ -171,6 +171,8 @@ int config_read_config_file(t_config * config,char * filename) {
            if (filter) {
              while (filter->next)
                filter = filter->next;
+             filter->next = (t_ip_filter *) malloc(sizeof(t_ip_filter));
+             filter = filter->next;
            } else {
              //first filter in this chain
              filter = (t_ip_filter *) malloc(sizeof(t_ip_filter));

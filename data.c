@@ -101,7 +101,6 @@ void data_destroy_table(void* table) {
   // noe we can ask ip_table to free the rest
   //fprintf(stderr, "data_destroy_table: passing over to ip_table_destroy_table\n");  
   ip_table_destroy_table(table,0);
-  //free(table);    
 }
 //------------------------------------------------------------------------------------
 int data_match_rule(t_ip_filter *filter,  t_raw_data * data, int i) {
@@ -109,8 +108,12 @@ int data_match_rule(t_ip_filter *filter,  t_raw_data * data, int i) {
 
   // cycle throught all filters, by return on fiorst match
   while (filter) {
-    if ( !((data->ip[i] & filter->mask) ^ filter->ip)) { // && //Ip matches! 
-//         ((! filter->port) || (data->port[i] == filter->port)) && // Filter port is set to 0 or port matches
+    //printf("Matching IP: !((%8x & %8x) ^ %8x) = %8x ",data->ip[i],filter->mask, filter->ip,!((data->ip[i] & filter->mask) ^ filter->ip));
+    //printf("PORT: (%2d == %2d) = %2d\n",data->port[i],filter->port,(data->port[i] == filter->port));
+    if ( !((data->ip[i] & filter->mask) ^ filter->ip) &&
+         !(( filter->port) &&  (data->port[i] ^ filter->port))
+       ) {
+           // Filter port is set to 0 or port matches
 //         ((! filter->prot)|| (data->prot == filter->prot)  ) ) { // Protocol is set to 0 or matches
       return filter->value;
     }
