@@ -25,7 +25,7 @@
 
 typedef enum {
       oBadOption,oDevices,oPeriod,oCat,
-      oPrimary, oSecondary, oTimeDivider, oByteDivider, oDump
+      oPrimary, oSecondary, oTimeDivider, oByteDivider, oDump, oSQL
 } e_opcodes;
 
 static struct {
@@ -40,6 +40,7 @@ static struct {
   { "timedivider", oTimeDivider },
   { "bytedivider", oByteDivider },
   { "dump", oDump },
+  { "sql", oSQL },
   { NULL,0 }
 };
 
@@ -147,6 +148,7 @@ int config_read_config_file(t_config * config,char * filename) {
            active_cat->timedivider = 1;
            active_cat->table = 0;
            active_cat->next = 0;
+           active_cat->sql = 0;
            bzero(active_cat->dump_programm, FILELENGTH);
            bzero(active_cat->name, TEXTLEN); 
            strncpy(active_cat->name,arg,TEXTLEN-1);          
@@ -194,6 +196,24 @@ int config_read_config_file(t_config * config,char * filename) {
            filter->mask = ipstrtoint(strdelim(&s));
            filter->port = atoi(strdelim(&s));
            break;           
+        case oSQL:
+           if (! active_cat) {
+             fprintf(stderr,"Traff: Reading Cat-option %s outside a Cat, in file %s, line %d.\n",keyword,filename,linenum);
+             exit(1);
+           }
+           if (!active_cat->sql) active_cat->sql = malloc(sizeof(t_sql));
+           active_cat->sql = malloc(sizeof(t_sql));
+           bzero(active_cat->sql->host, LONGTEXT);
+           bzero(active_cat->sql->db, LONGTEXT);
+           bzero(active_cat->sql->table, LONGTEXT);
+           bzero(active_cat->sql->user, LONGTEXT);
+           bzero(active_cat->sql->password, LONGTEXT);
+           strncpy(active_cat->sql->host, arg,  LONGTEXT);
+           strncpy(active_cat->sql->db, strdelim(&s), LONGTEXT);
+           strncpy(active_cat->sql->table, strdelim(&s), LONGTEXT);
+           strncpy(active_cat->sql->user, strdelim(&s), LONGTEXT);
+           strncpy(active_cat->sql->password, strdelim(&s), LONGTEXT);
+           break;
         case oTimeDivider:
            if (! active_cat) {
              fprintf(stderr,"Traff: Reading Cat-option %s outside a Cat, in file %s, line %d.\n",keyword,filename,linenum);
@@ -214,7 +234,7 @@ int config_read_config_file(t_config * config,char * filename) {
              exit(1);
            }
            strncpy(active_cat->dump_programm, arg, FILELENGTH);
-           
+            
            break;
         default:
           fprintf(stderr,"Traff: config_read_config_file: Unimplemented OpCode %d\n",opcode);

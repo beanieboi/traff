@@ -4,6 +4,7 @@
 
 #define TEXTLEN 16 
 #define FILELENGTH 30
+#define LONGTEXT 30
 #define DEBUG
 
 #include <pcap.h> 
@@ -28,6 +29,14 @@ typedef struct t_interface_list {
   struct t_interface_list * next;
 } t_interface_list;
 
+typedef struct t_sql {
+  char host[LONGTEXT];
+  char db[LONGTEXT];
+  char table[LONGTEXT];
+  char user[LONGTEXT];
+  char password[LONGTEXT];
+} t_sql;
+
 typedef struct t_cat {
   char name[TEXTLEN];
   t_ip_filter *primary;
@@ -39,6 +48,7 @@ typedef struct t_cat {
   pthread_t thread;
   struct t_cat *next;
   char dump_programm[FILELENGTH];
+  t_sql * sql;
 } t_cat;
 
 typedef struct t_config {
