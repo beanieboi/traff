@@ -105,7 +105,7 @@ int main (int argc, char *argv[]) {
   mysql_close(&mysql);
   close(fifo);
   sleep(2);
-  unlink(argv[2]);
+  unlink(argv[1]);
 } // main
 //-----------------------------------------------------------------------------------
 void cipa(unsigned int ip, unsigned char cip[]) {
