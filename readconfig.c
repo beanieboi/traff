@@ -120,6 +120,10 @@ int config_read_config_file(t_config * config,char * filename) {
           while (!(arg == NULL || !*arg || *arg == '\n' || *arg == '#')) {
             new_device = (t_interface_list *)malloc(sizeof(t_interface_list));
             new_device->device = 0;
+            new_device->buffer = 0;
+            new_device->package_count = 50;
+            new_device->read_buffer = 0;
+            new_device->write_buffer = 0;
             strcpy(new_device->name, arg);
             config->devicecount += 1;
             // first we will insert the devices into this list. Later on, we will make a ring-list of this list

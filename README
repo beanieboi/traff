@@ -1,5 +1,5 @@
 	Traff - Traffic Accounting Program
-	Version 0.3
+	Version 0.4
 	(c) 2001 - Hans Marcus Krüger
 	
 
@@ -47,13 +47,9 @@ INSTALLATION / PRECONDITIONS
 
     1. unpacking the sources 
     2. changing to that directory and type make
-    3. copy the file traff.conf to /etc and modify it to satisfy your needs
-    4. copy all executables to /usr/local/sbin
-    5. copy traff.initd to /etc/init.d/traff or the equivalent directory on your system
-    6. set up your mysql-database
-    7. start the program with /etc/init.d/traff start
-  
-  As Time goes by I will automate installation an add more detailed information here.
+    3. type make install
+    4. start the programm running /etc/init.d/traff start
+
 
 BUGS/UPDATES
 

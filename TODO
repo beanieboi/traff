@@ -1,21 +1,28 @@
 TO DO for release (1.0)
 
-2001-08-19: Memory leakage - I believe that the re is a memory-leakage somewhere 
+The letters fter the date mean:
+H - Hold, W - Working, S - Not Started yet, D - Done, R - Dropped
+
+2001-08-19 H: Memory leakage - I believe that the re is a memory-leakage somewhere 
 in the program. I does not stop growing.
 
-2001-08-19: Configuration script/install-script - Installation and configuration must 
+2001-08-19 S: Configuration script/install-script - Installation and configuration must 
 become easier. User must be able to specify what dump-programs should be compiled.
 
-2001-08-19: Documentation for the configuration file and manages
+2001-08-19 H: Documentation for the configuration file and manages
 
-2001-08-19: Dumping program to dump to text-file and binary-file
+2001-08-19 H: Dumping program to dump to text-file and binary-file
 
-2001-08-19: Dumping program to dump into a postgresql-database, documentation, 
+2001-08-19 S: Dumping program to dump into a postgresql-database, documentation, 
 small How-to on how to set up postgresql database
 
-2001-08-09: Documentations and small how-to to Mysql-dumping program
+2001-08-09 H: Documentations and small how-to to Mysql-dumping program
 
-2001-08-19: a lot of features to the main-program that I will do in the next few weeks
+2001-08-19 W: a lot of features to the main-program that I will do in the next few weeks
+
+2001-09-07 W: Change the way the programm listens on the nics, so we loose not data on the high-spped nic while waiting for a package on the low-speed nic.
+
+2001-09-07 W: Programm does not exits cleanly
 
 So, there is still a lot to do, and help would be very appreciated. Please contact me 
 if you a re willing to help (hanskruger@iname.com)

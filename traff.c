@@ -29,6 +29,10 @@
 #define CAT_THREAD 0  //If this is set, threats will be created to account data
 #define DUMP 2   //0 will do nothing, 1 will use threads 2 will use fork
 
+//#define DEBUG(s) printf("traff(%d): ",getpid()); s
+#define DEBUG(s)
+
+
 //typedef unsigned char U_CHAR;
 typedef struct {
   U_CHAR version[1];
@@ -53,12 +57,21 @@ typedef struct {
   t_cat * cat;                                                                      
   t_raw_data * data;  
 } t_account;
+typedef struct pcap_pkthdr t_pcap_pkthdr;
 
 void print_config( t_config * config);
 void cipa(unsigned int ip, unsigned char cip[]);
 void catch_signal(int sig);
 void account(t_account * account_inf);
 void dump(t_cat * cat);
+void read_device(t_interface_list * device);
+void push_queue(t_interface_list * device, const struct pcap_pkthdr *h, const u_char *raw_pkt); 
+int pop_queue(t_interface_list * device, t_raw_data * dst_data);
+void init_queue(t_interface_list * device);
+void delete_queue(t_interface_list * device);
+void start_accounting(t_config * config);
+void process_packages (t_config * config);
+void print_data(t_raw_data * data);
 
 // Global Variables
 int cycle = 1;    // Our programm will runn as long as this variable is set.
@@ -70,25 +83,67 @@ int dt = 0;       // dt stores the last time a dump was done. It must be global 
 //-----------------------------------------------------------------------------------
 int main (int argc, char *argv[]) {
   t_config * config = (t_config *) malloc(sizeof(t_config));
-  t_cat * cat = 0;                                                                      
-  t_cat * thread_cat = 0;                                                                      
-  pthread_attr_t  pthread_attr_default;
-  pthread_attr_t  pthread_attr_detach;
-
+  int i,child;
+  t_interface_list * devices,temp1_dev,temp2_dev ;                
   
-  // Things neede by pcap
+  signal(SIGCHLD, SIG_IGN);
+
+  // reading config file
+  config_init(config,"/etc/traff.conf"); // this function will initialize configuration
+  config->dt = time(0);
+  // inititlizing Pcap
+  devices = config->devices;
+  DEBUG(printf("Starting FORK-sequence...\n");)
+  for (i = 0; i < config->devicecount; i++)  {
+    DEBUG(printf("Forking for the %d. time: Device: %s\n",i,devices->name);)
+    child = fork();
+    if (child == 0) {
+      //this is the child
+      //Reduce the config->devices to only the one we are using:
+//      temp1_dev = config->devices;
+//      while (temp1_dev) {
+//        if (temp1_dev != devices) {
+//          temp2_dev = temp1_dev;
+//          temp1_dev = temp1_dev->next;
+//          free(temp2_dev);
+//        }  
+//      }
+      config->devices = devices;
+      config->devices->next = 0;
+      // done reducing devices.
+      
+      start_accounting(config);
+      exit(0);
+    } else if (child > 0) {
+      // I am Parrent
+      DEBUG(printf("Lauched Child with PID %d\n",child);)
+      config->dt += 20; // Create a offset, so dump-programms do not execute all at the same time  
+      devices = devices->next; // Get next device for next fork
+    } else {
+      printf("Error while forking\n");
+      exit(1);
+    }
+  }
+  exit(0);
+} // main
+//-----------------------------------------------------------------------------------
+void start_accounting(t_config * config) {
+  // this function dooes the main part. It is executed once for each device.
+  pthread_attr_t  pthread_attr_detach;
+  t_cat * cat = 0;                                                                      
   char buff[PCAP_ERRBUF_SIZE];
   unsigned char *raw_pkt;
   struct pcap_pkthdr pkthdr;
-  int i;
-  eth_struct_t *eth_pkt = 0;
-  ip_struct_t  *ip_pkt  = 0;
-  t_interface_list * devices = 0;                
-  t_raw_data data;
   t_account account_inf;
-
   pthread_t thread;
+  int dt;
+  t_interface_list * device;                
   
+  pthread_attr_init(&pthread_attr_detach);
+  pthread_attr_setdetachstate(&pthread_attr_detach, PTHREAD_CREATE_DETACHED);
+  dt = config->dt;
+  device = config->devices;
+ 
   // First: initialize everything
   signal(SIGUSR1, catch_signal);
   signal(SIGUSR2, catch_signal);
@@ -96,146 +151,93 @@ int main (int argc, char *argv[]) {
   signal(SIGTERM, catch_signal);
   signal(SIGCHLD, SIG_IGN);
 
-  pthread_attr_init(&pthread_attr_default);
-  pthread_attr_init(&pthread_attr_detach);
-  pthread_attr_setdetachstate(&pthread_attr_detach, PTHREAD_CREATE_DETACHED);
-  dt = time(0);
-  // reading config file
-  config_init(config,"/etc/traff.conf"); // this function will initialize configuration
-  // inititlizing Pcap
-  devices = config->devices;
-  for (i = 0; i < config->devicecount; i++)  {
-    devices->device = pcap_open_live(devices->name, 96, 1,1000, buff);
-    if (! devices->device) { 
-      printf("Error opening device %s\n",devices->name);
-      exit(1); 
-    }
-    devices = devices->next;
+  DEBUG(printf("Opening Device %s\n",device->name);)
+  device->device = pcap_open_live(device->name, 96, 1,100, buff);
+  if (! device->device) { 
+    printf("Error opening device %s\n",device->name);
+    exit(1); 
   }
-  // initializing Categories: Let data_init do the rest config_init could not do
-  cat = config->cats;                                                                      
+  //initializing device-queue
+  init_queue(device);
+  
+  //initializing Categories
   while (cat) {                                                                                    
     data_init(cat);      
     cat = cat->next;
   }
-
-
-  // now we can start accounting
-  devices = config->devices;
-  while (cycle || dt) {
-    raw_pkt =  (unsigned char *) pcap_next(devices->device,&pkthdr);// reading package :)
-
-    if (raw_pkt==NULL) continue; // if we recieve a empty package continue
-                   
-    eth_pkt = (eth_struct_t *) raw_pkt;
-    if (eth_pkt->ptype[0]==8 && eth_pkt->ptype[1]==0) {
-      // The package is a ip
-      ip_pkt = (ip_struct_t *) (raw_pkt + 14);                                                    
-
-      #if 0 
-      printf ("%03d.%03d.%03d.%03d %03d.%03d.%03d.%03d  %3d %5d %5d %5d\n",
-           ip_pkt->srcip[0],ip_pkt->srcip[1],ip_pkt->srcip[2],ip_pkt->srcip[3],
-           ip_pkt->dstip[0],ip_pkt->dstip[1],ip_pkt->dstip[2],ip_pkt->dstip[3],
-           ip_pkt->prot[0],
-           ip_pkt->srcpt[0]*256+ip_pkt->srcpt[1],
-           ip_pkt->dstpt[0]*256+ip_pkt->dstpt[1],
-           ip_pkt->length[0]*256+ip_pkt->length[1]);
-      #endif
+ 
+  //------------ Initialization Done ---------------
+  while (cycle) {
+    //fill package buffer...
+    nice(-5);
+    DEBUG(printf("Calling loop on device %s for %d packages\n",device->name, device->package_count);) 
+    pcap_loop(device->device, device->package_count, (pcap_handler) push_queue, (u_char *) device);  
     
-      //setting values in data to be passed later on
-      data.ip[0]  = ((ip_pkt->srcip[0] << 24) + (ip_pkt->srcip[1] << 16) + (ip_pkt->srcip[2] << 8) + ip_pkt->srcip[3]);
-      data.ip[1]  = ((ip_pkt->dstip[0] << 24) + (ip_pkt->dstip[1] << 16) + (ip_pkt->dstip[2] << 8) + ip_pkt->dstip[3]);
-      data.port[0]  = ((ip_pkt->srcpt[0] << 8) + ip_pkt->srcpt[1]);
-      data.port[1]  = ((ip_pkt->dstpt[0] << 8) + ip_pkt->dstpt[1]);
-      data.length = (ip_pkt->length[0] *256 + ip_pkt->length[1]);
-      data.prot  = ip_pkt->prot[0];
+    // Call the thread to account data and empty buffer
+    pthread_create(&thread, &pthread_attr_detach, (void*) process_packages, (void*) config);
+    
   
+  } // while (cycle || dt)
+
+  // ------------ Clean-up Funktions here -----------------
+ 
+
+} // start_accountin 
+
+//-----------------------------------------------------------------------------------
+void process_packages (t_config * config) {
+  t_raw_data data;
+  t_cat * cat = 0;                                                                      
+  t_cat * thread_cat = 0;                                                                      
+  pthread_attr_t  pthread_attr_detach;
+  pthread_t thread;
+
+  
+  pthread_attr_init(&pthread_attr_detach);
+  pthread_attr_setdetachstate(&pthread_attr_detach, PTHREAD_CREATE_DETACHED);
+  // first add all packtes in buffer to the table:
+  while (pop_queue(config->devices,&data)) {
+    DEBUG(printf("Accounting package:\n"); print_data(&data); )
       
-      // now that we have the package we should pass it to each category, so it can be processed 
-      cat = config->cats;                                                                      
-      while(cat) {
-
-        #if CAT_THREAD
-        account_inf.cat = cat; 
-        account_inf.data = &data;
-        //creating thread
-        pthread_create( &cat->thread, &pthread_attr_default, (void*)&account, (void*) &account_inf);
-        #else
-        data_account(cat, &data);
-        #endif
-        cat = cat->next;
-      }
-
-      #if CAT_THREAD
-      cat = config->cats;                                                                      
-      while(cat) {
-        pthread_join( cat->thread,0);
-        cat->thread = 0;
-        cat = cat->next;
-      }
-      #endif
-
-      
-    } // if Pakage is of type IP
-            
-    // now lets pint DEvices to the next device, so all devices are read. 
-    // REmember that devices is a RING-List: The last element points to the first. If Only
-    // one element exists it will point to itselv.
-
-    // This prints some information on the screen.
-    if (info) {
-      print_config(config);
-      cat = config->cats;
-      while(cat) {
-        data_print_info(cat);
-        cat = cat->next;
-      }
-      info = 0;
+    // now that we have the package we should pass it to each category, so it can be processed 
+    cat = config->cats;                                                                      
+    while(cat) {
+      data_account(cat, &data);
+      cat = cat->next;
     }
     
-    // check if we should dump informatoion again
-    if ((dt + config->cycletime < time(0)) || ! cycle ) { 
-      dt = time(0);
-      if (! cycle) dt = 0; // when cycle is set to 0 we will make a dump and no longer cycle
+  } // did accounting for packages in queue
 
-      if (dumping) {
-        printf("Trying to dump while other dump is active. Ignoring this dump");
-      } else {
- 
-       cat = config->cats;                                                                      
-       while (cat) {                                                                                    
-         thread_cat = malloc(sizeof(t_cat));
-         memcpy(thread_cat, cat,sizeof(t_cat));
-         //thread_cat->table = cat->table;
-         data_init(cat);      
-         //fprintf(stderr, "Old table: %x, new table %x\n",thread_cat->table,cat->table);
-         pthread_create(&thread, &pthread_attr_detach, (void*)&dump, (void*) thread_cat);
-//         pthread_detach(thread);
-         // now associate a new table to the category. The thread will be responseble for 
-         // destroying the old one
-         cat = cat->next;
-       } //while (cat) 
-      } //if (dumping)
-    } //if ((dt + config->cycletime < time(0)) || ! cycle )
+  // now do the dumpinmg if time elapsed...
+  if ((config->dt + config->cycletime < time(0)) || ! cycle ) { 
+    config->dt = time(0);
+    if (! cycle) config->dt = 0; // when cycle is set to 0 we will make a dump and no longer cycle
 
-    devices = devices->next;
-
-  } // while (cycle)
-
-  // Cleaning up
-  devices = config->devices;
-  for (i = 0; i < config->devicecount; i++)  {
-    pcap_close(devices->device);
-    devices->device = 0;
-    devices = devices->next;
-  }
+    if (dumping) {
+      printf("Trying to dump while other dump is active. Ignoring this dump");
+    } else {
+      cat = config->cats;                                                                      
+      while (cat) {                                                                                    
+        thread_cat = malloc(sizeof(t_cat));
+        memcpy(thread_cat, cat,sizeof(t_cat));
+        data_init(cat);      
+        signal(SIGCHLD, SIG_IGN);
+        pthread_create(&thread, &pthread_attr_detach, (void*)&dump, (void*) thread_cat);
+        // now associate a new table to the category. The thread will be responseble for 
+        // destroying the old one
+        cat = cat->next;
+      } //while (cat) 
+    }   //if (dumping)
+  } //if ((dt + config->cycletime < time(0)) || ! cycle )
   
-  free(config);
-  config = 0;
- 
-  pthread_exit(0);
-  
-} // main
+
+} // process_packages
+//-----------------------------------------------------------------------------------
+void read_device(t_interface_list * device) {
+  nice(-5);
+  pcap_loop(device->device, -1, (pcap_handler) push_queue, (u_char *) device);  
+  exit(0);  
+}
 //-----------------------------------------------------------------------------------
 void dump(t_cat * cat) {
   //fprintf(stderr, "dump: Staring dump\n");
@@ -271,7 +273,7 @@ void print_config( t_config * config) {
   printf("Devices:\n"); 
 
   for (i = 0; i < config->devicecount; i++)  {
-    printf("| %s\n",devices->name);
+    printf("| Device: %s Buffer: %d%\n",devices->name, (int)(devices->write_buffer - devices->read_buffer)/BUFFERSIZE );
     devices = devices->next;
   }
 
@@ -307,12 +309,116 @@ void print_config( t_config * config) {
   } // while (cat)
 }
 //-----------------------------------------------------------------------------------
-
+void print_data(t_raw_data * data) {
+  unsigned char ip1[4];
+  unsigned char ip2[4];
+  cipa(data->ip[0],ip1);
+  cipa(data->ip[1],ip2);
+  
+  printf("%3d.%3d.%3d.%3d:%5d %3d.%3d.%3d.%3d:%5d %3d %d\n",
+         ip1[0],ip1[1],ip1[2],ip1[3],data->port[0],
+         ip2[0],ip2[1],ip2[2],ip2[3],data->port[1],
+         data->prot, data->length);
+}
+//-----------------------------------------------------------------------------------
 void cipa(unsigned int ip, unsigned char cip[]) {
   cip[0] = ip>>24;
   cip[1] = ((ip<<8)>>24);
   cip[2] = ((ip<<16)>>24);
   cip[3] = ((ip<<24)>>24);
 }
+//-----------------------------------------------------------------------------------
+void init_queue(t_interface_list * device) {
+  int i;
+  device->buffer = malloc(sizeof(t_BUFFER));
+  device->read_buffer = 0;
+  device->write_buffer = 0;
+  DEBUG(printf("Initializing Queue for device %s with %d entries\n",device->name,BUFFERSIZE);)
+  for(i = 0;i < BUFFERSIZE; i++) {
+    (*device->buffer)[i] = malloc(sizeof(t_raw_data));
+  }
+}
+//-----------------------------------------------------------------------------------
+void delete_queue(t_interface_list * device) {
+  int i;
+  device->read_buffer = -1;
+  device->write_buffer = -1;
+  DEBUG(printf("Deleting queue for device %s\n",device->name);)
+  for(i = 0;i < BUFFERSIZE; i++) {
+    free( (* device->buffer)[i] );
+    (*device->buffer)[i] = 0; 
+  }
+  free(device->buffer);
+}
+//-----------------------------------------------------------------------------------
+void push_queue(t_interface_list * device, const struct pcap_pkthdr *h, const u_char *raw_pkt) {
+  t_raw_data * data;
+  eth_struct_t *eth_pkt = 0;
+  ip_struct_t  *ip_pkt  = 0;
 
+  DEBUG(printf("Inserting package into queue of device %s: wb:%d rb:%d\n",device->name,device->write_buffer,device->read_buffer);)
+  // Point data to where dta should be stored
+  data = (t_raw_data *) (*device->buffer)[device->write_buffer];
 
+  if (raw_pkt !=NULL) { // if we recieve a empty package continue
+    eth_pkt = (eth_struct_t *) raw_pkt;
+    if (eth_pkt->ptype[0]==8 && eth_pkt->ptype[1] == 0) {
+      // The package is a ip
+      ip_pkt = (ip_struct_t *) (raw_pkt + 14);                                                    
+      //Converts Data:
+      DEBUG(printf("IP-Package %d.%d.%d.%d:%5d -> %d.%d.%d.%d:%5d\n",
+            ip_pkt->srcip[0],ip_pkt->srcip[1],ip_pkt->srcip[2],ip_pkt->srcip[3],((ip_pkt->srcpt[0] << 8) + ip_pkt->srcpt[1]),
+            ip_pkt->dstip[0],ip_pkt->dstip[1],ip_pkt->dstip[2],ip_pkt->dstip[3],((ip_pkt->dstpt[0] << 8) + ip_pkt->dstpt[1]));)
+
+      data->ip[0]  = ((ip_pkt->srcip[0] << 24) + (ip_pkt->srcip[1] << 16) + (ip_pkt->srcip[2] << 8) + ip_pkt->srcip[3]);
+      data->ip[1]  = ((ip_pkt->dstip[0] << 24) + (ip_pkt->dstip[1] << 16) + (ip_pkt->dstip[2] << 8) + ip_pkt->dstip[3]);
+      data->port[0]  = ((ip_pkt->srcpt[0] << 8) + ip_pkt->srcpt[1]);
+      data->port[1]  = ((ip_pkt->dstpt[0] << 8) + ip_pkt->dstpt[1]);
+      data->length = (ip_pkt->length[0] *256 + ip_pkt->length[1]);
+      data->prot  = ip_pkt->prot[0];
+      // Increment Write_buffer.
+      DEBUG(printf("Inserting package: "); print_data(data); )
+      device->write_buffer = (device->write_buffer + 1) % BUFFERSIZE;
+    }
+  }
+}
+//-----------------------------------------------------------------------------------
+int pop_queue(t_interface_list * device, t_raw_data * dst_data) {
+  t_raw_data * data;
+  // Point data to source of data
+  data = (t_raw_data *) (*device->buffer)[device->read_buffer];
+  
+  if (device->read_buffer == device->write_buffer) {
+    //DEBUG(printf("Popping package: No package for device %s\n",device->name);)
+    return 0;
+  } else {
+    DEBUG(printf("Popping package from queue of device %s\n",device->name);)
+    memcpy(dst_data,data,sizeof(t_raw_data));
+    //increment read_buffer for next read
+    device->read_buffer = (device->read_buffer + 1) % BUFFERSIZE;
+    return 1;
+  }
+}
+//-----------------------------------------------------------------------------------
+// old
+    //    raw_pkt =  (unsigned char *) pcap_next(devices->device,&pkthdr);// reading package :)
+//    if (raw_pkt==NULL) continue; // if we recieve a empty package continue
+                   
+//    eth_pkt = (eth_struct_t *) raw_pkt;
+//    if (eth_pkt->ptype[0]==8 && eth_pkt->ptype[1]==0) {
+      // The package is a ip
+//      ip_pkt = (ip_struct_t *) (raw_pkt + 14);                                                    
+
+      #if 0 
+      printf ("%03d.%03d.%03d.%03d %03d.%03d.%03d.%03d  %3d %5d %5d %5d\n",
+           ip_pkt->srcip[0],ip_pkt->srcip[1],ip_pkt->srcip[2],ip_pkt->srcip[3],
+           ip_pkt->dstip[0],ip_pkt->dstip[1],ip_pkt->dstip[2],ip_pkt->dstip[3],
+           ip_pkt->prot[0],
+           ip_pkt->srcpt[0]*256+ip_pkt->srcpt[1],
+           ip_pkt->dstpt[0]*256+ip_pkt->dstpt[1],
+           ip_pkt->length[0]*256+ip_pkt->length[1]);
+      #endif
+    
+      //setting values in data to be passed later on
+  
+      

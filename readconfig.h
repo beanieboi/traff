@@ -23,8 +23,15 @@ typedef struct t_ip_filter {
   struct t_ip_filter * next;
 } t_ip_filter;
 
+
+#define BUFFERSIZE 500
+typedef void* t_BUFFER[BUFFERSIZE];
 typedef struct t_interface_list {
   pcap_t * device;
+  t_BUFFER *  buffer;
+  int read_buffer;
+  int package_count;
+  int write_buffer;
   char name[TEXTLEN];
   struct t_interface_list * next;
 } t_interface_list;
@@ -54,6 +61,7 @@ typedef struct t_cat {
 typedef struct t_config {
   int cycletime;
   int devicecount;
+  int dt;
   t_interface_list * devices;
   t_cat * cats;
 } t_config;
