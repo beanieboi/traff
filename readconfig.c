@@ -25,7 +25,7 @@
 
 typedef enum {
       oBadOption,oDevices,oPeriod,oCat,
-      oPrimary, oSecondary, oTimeDivider, oByteDivider, oDump, oSQL
+      oPrimary, oSecondary, oTimeDivider, oByteDivider, oDump, oSQL, oPackagecount, oBuffersize
 } e_opcodes;
 
 static struct {
@@ -41,6 +41,8 @@ static struct {
   { "bytedivider", oByteDivider },
   { "dump", oDump },
   { "sql", oSQL },
+  { "packagecount", oPackagecount },
+  { "buffersize", oBuffersize },
   { NULL,0 }
 };
 
@@ -86,6 +88,8 @@ int config_read_config_file(t_config * config,char * filename) {
   t_cat * active_cat = 0;
   t_interface_list * new_device = 0;
   t_ip_filter * filter = 0;
+
+  int packagecount = (int)( 0.8 * BUFFERSIZE);
   
   if (!config) return 1;
 
@@ -121,7 +125,7 @@ int config_read_config_file(t_config * config,char * filename) {
             new_device = (t_interface_list *)malloc(sizeof(t_interface_list));
             new_device->device = 0;
             new_device->buffer = 0;
-            new_device->package_count = 50;
+            new_device->package_count = packagecount;
             new_device->read_buffer = 0;
             new_device->write_buffer = 0;
             strcpy(new_device->name, arg);
@@ -146,6 +150,13 @@ int config_read_config_file(t_config * config,char * filename) {
           break;
         case oPeriod:
            config->cycletime = atoi(arg);
+           break;
+        case oPackagecount:
+           packagecount = atoi(arg);
+           if ( packagecount * 0.8 > (int)( 0.8 * BUFFERSIZE)) {
+             fprintf(stderr, "Packagecount may not be bigger that %d\n", (int)( 0.8 * BUFFERSIZE));
+             packagecount = (int)( 0.8 * BUFFERSIZE);
+           }  
            break;
         case oCat:
            active_cat = (t_cat *)malloc(sizeof(t_cat));

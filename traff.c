@@ -24,7 +24,9 @@
 #include <time.h>
 #include <netinet/in.h>
 #include <pthread.h>                                                                               
+#include <syslog.h>
 #include "readconfig.h"
+
 
 #define CAT_THREAD 0  //If this is set, threats will be created to account data
 #define DUMP 2   //0 will do nothing, 1 will use threads 2 will use fork
@@ -64,7 +66,6 @@ void cipa(unsigned int ip, unsigned char cip[]);
 void catch_signal(int sig);
 void account(t_account * account_inf);
 void dump(t_cat * cat);
-void read_device(t_interface_list * device);
 void push_queue(t_interface_list * device, const struct pcap_pkthdr *h, const u_char *raw_pkt); 
 int pop_queue(t_interface_list * device, t_raw_data * dst_data);
 void init_queue(t_interface_list * device);
@@ -78,29 +79,44 @@ int cycle = 1;    // Our programm will runn as long as this variable is set.
 int info = 0;     // If this is set some information will be dumped to stderr
 int dumping = 0;  // This holds the number od thrteads that are dumping information.
 int dt = 0;       // dt stores the last time a dump was done. It must be global so a dump can be triggered by a signal
-
+int got_signal = -1;
 
 //-----------------------------------------------------------------------------------
 int main (int argc, char *argv[]) {
   t_config * config = (t_config *) malloc(sizeof(t_config));
-  int i,child;
+
+  int i;
+  int * child_list;
+  int * child;
+
   t_interface_list * devices,temp1_dev,temp2_dev ;                
   
+  openlog("traff",LOG_PID,LOG_DAEMON);
+  syslog(LOG_INFO, "Starting traff");  
+  signal(SIGUSR1, catch_signal);
+  signal(SIGUSR2, catch_signal);
+  signal(SIGHUP,  catch_signal);
+  signal(SIGTERM, catch_signal);
   signal(SIGCHLD, SIG_IGN);
-
   // reading config file
   config_init(config,"/etc/traff.conf"); // this function will initialize configuration
   config->dt = time(0);
   // inititlizing Pcap
   devices = config->devices;
   DEBUG(printf("Starting FORK-sequence...\n");)
+
+  child_list = malloc(sizeof(int) * config->devicecount);
+  child = child_list;
+  
   for (i = 0; i < config->devicecount; i++)  {
     DEBUG(printf("Forking for the %d. time: Device: %s\n",i,devices->name);)
-    child = fork();
-    if (child == 0) {
+    *child = fork();
+    if (*child == 0) {
       //this is the child
+      free(child_list);
       //Reduce the config->devices to only the one we are using:
-//      temp1_dev = config->devices;
+
+ //      temp1_dev = config->devices;
 //      while (temp1_dev) {
 //        if (temp1_dev != devices) {
 //          temp2_dev = temp1_dev;
@@ -111,19 +127,38 @@ int main (int argc, char *argv[]) {
       config->devices = devices;
       config->devices->next = 0;
       // done reducing devices.
-      
+      syslog(LOG_INFO, "Started traff for device %s", devices->name);  
       start_accounting(config);
       exit(0);
-    } else if (child > 0) {
+    } else if (*child > 0) {
       // I am Parrent
       DEBUG(printf("Lauched Child with PID %d\n",child);)
       config->dt += 20; // Create a offset, so dump-programms do not execute all at the same time  
       devices = devices->next; // Get next device for next fork
+      child++;
     } else {
       printf("Error while forking\n");
       exit(1);
     }
   }
+
+  while (cycle) {
+    // Only patrretn will arrive to this styage. I shall act as a proxy for the others:
+    // Any signals recieved be it shall be passed to the others
+    pause();
+    if (got_signal > 0) {
+      child = child_list;
+      for (i = 0; i < config->devicecount; i++)  {
+        DEBUG(printf("Sending process %d signal %d\n", *child ,got_signal);)
+        kill(*child ,got_signal);
+        child++;
+      }
+      got_signal = -1;
+    }
+  }
+  syslog(LOG_INFO, "Stopped traff");  
+      
+  
   exit(0);
 } // main
 //-----------------------------------------------------------------------------------
@@ -155,6 +190,7 @@ void start_accounting(t_config * config) {
   device->device = pcap_open_live(device->name, 96, 1,100, buff);
   if (! device->device) { 
     printf("Error opening device %s\n",device->name);
+    syslog(LOG_ERR, "Error opening device %s",device->name);
     exit(1); 
   }
   //initializing device-queue
@@ -172,18 +208,16 @@ void start_accounting(t_config * config) {
     nice(-5);
     DEBUG(printf("Calling loop on device %s for %d packages\n",device->name, device->package_count);) 
     pcap_loop(device->device, device->package_count, (pcap_handler) push_queue, (u_char *) device);  
-    
     // Call the thread to account data and empty buffer
     pthread_create(&thread, &pthread_attr_detach, (void*) process_packages, (void*) config);
-    
   
   } // while (cycle || dt)
 
   // ------------ Clean-up Funktions here -----------------
  
-
+  syslog(LOG_INFO,"Exiting traff listening on %s", device->name);
+  exit(0);
 } // start_accountin 
-
 //-----------------------------------------------------------------------------------
 void process_packages (t_config * config) {
   t_raw_data data;
@@ -214,7 +248,8 @@ void process_packages (t_config * config) {
     if (! cycle) config->dt = 0; // when cycle is set to 0 we will make a dump and no longer cycle
 
     if (dumping) {
-      printf("Trying to dump while other dump is active. Ignoring this dump");
+      fprintf(stderr,"Trying to dump while other dump is active. Ignoring this dump\n");
+      syslog(LOG_WARNING,"TRying to dump while previous dumping still active. ignoring this dump");
     } else {
       cat = config->cats;                                                                      
       while (cat) {                                                                                    
@@ -230,18 +265,12 @@ void process_packages (t_config * config) {
     }   //if (dumping)
   } //if ((dt + config->cycletime < time(0)) || ! cycle )
   
-
 } // process_packages
-//-----------------------------------------------------------------------------------
-void read_device(t_interface_list * device) {
-  nice(-5);
-  pcap_loop(device->device, -1, (pcap_handler) push_queue, (u_char *) device);  
-  exit(0);  
-}
 //-----------------------------------------------------------------------------------
 void dump(t_cat * cat) {
   //fprintf(stderr, "dump: Staring dump\n");
   dumping++;
+  nice(+5);
   data_dump(cat);
   dumping--;
   //fprintf(stderr, "dump: Dump done\n");
@@ -256,6 +285,7 @@ void account(t_account * account_inf) {
 }
 //-----------------------------------------------------------------------------------
 void catch_signal(int sig) {
+  got_signal = sig;
   if (sig == SIGUSR1) info = 1;
   else if (sig == SIGUSR2) dt = 1;
   else cycle = 0;

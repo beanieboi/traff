@@ -31,6 +31,7 @@ typedef struct t_interface_list {
   t_BUFFER *  buffer;
   int read_buffer;
   int package_count;
+  int buffersize;
   int write_buffer;
   char name[TEXTLEN];
   struct t_interface_list * next;

@@ -22,11 +22,13 @@
 #include <time.h>
 #include <netinet/in.h>
 #include <mysql/mysql.h>
+#include <syslog.h>
 #include "readconfig.h"
+#include <signal.h>
 
 #define QUERYLENGTH 1024
-//#define DEBUG(s) printf("%s(%d): ","traff_mysql_dump",getpid()); s; 
-#define DEBUG(s)
+#define DEBUG(s) printf("traff_mysql_dump(%d): ",getpid()); s; 
+//#define DEBUG(s)
 
 void cipa(unsigned int ip, unsigned char cip[]);
 
@@ -40,11 +42,17 @@ int main (int argc, char *argv[]) {
   extern int errno;
   MYSQL mysql;
   char query[QUERYLENGTH];
+  pid_t ppid;
+
+  openlog("traff_mysql_dump",LOG_PID,LOG_DAEMON);
+  syslog(LOG_INFO, "Starting traff_mysql_dump");
   //fprintf(stderr,"Fifo Filename: %s Category %s\n", argv[1],argv[2]);
 //  if (argc != 3) exit(1);
   
 //  config_init(config,argv[3]); 
-
+ 
+  ppid = atoi( argv[4] );
+  DEBUG(printf("Parrent is %d\n",ppid);)
   DEBUG(printf("Debuging Mode Enabled\n");)
   DEBUG(printf("Openning Configugariotn file %s...\n", argv[3]);)
   config_init(config,argv[3]); 
@@ -59,16 +67,25 @@ int main (int argc, char *argv[]) {
   mysql_connect(&mysql,cat->sql->host,cat->sql->user,cat->sql->password);
   if (mysql_errno(&mysql)) {
     printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+    syslog(LOG_ERR,"Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+    kill(ppid, SIGKILL);
+    unlink(argv[1]);
     exit(1);
   }
   mysql_select_db(&mysql,cat->sql->db); 
   if (mysql_errno(&mysql)) {
     printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+    syslog(LOG_ERR,"Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+    kill(ppid, SIGTERM);
+    unlink(argv[1]);
     exit(1);
   }
 
   if ( (fifo = open(argv[1],O_RDONLY)) == -1 ) {
     fprintf(stderr, "%s: Cat: %s: Error opening fifo %s for reading.\nError: %s\n",argv[0],argv[2],argv[1],strerror(errno));
+    syslog(LOG_ERR, "%s: Cat: %s: Error opening fifo %s for reading.\nError: %s\n",argv[0],argv[2],argv[1],strerror(errno));
+    kill(ppid, SIGTERM);
+    unlink(argv[1]);
     exit(1);
   }
 
@@ -85,6 +102,9 @@ int main (int argc, char *argv[]) {
     
       if (mysql_query(&mysql,query)){
         printf("Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+        syslog(LOG_ERR,"Error connecting to Mysql-Database:\n%d, %s\n", mysql_errno(&mysql),mysql_error(&mysql));
+        kill(ppid, SIGTERM);
+        unlink(argv[1]);
         exit(1);
       }
       DEBUG(printf("Error: %s, Affected Rows: %d\n",mysql_error(&mysql), mysql.affected_rows );)  

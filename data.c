@@ -18,18 +18,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-//#include <pcap.h>
 #include <signal.h>
-//#include <limits.h>
-//#include <unistd.h>
 #include <fcntl.h>
-//#include <time.h>
-//#include <netinet/in.h>
 #include "readconfig.h"
 #include "data.h"
-//#include "ip_table.h"
 
-#define DEBUG(s) 
+#define DEBUG(s) printf("traff::data.c:(%d): ",getpid()); s
+//#define DEBUG(s) 
 
 //------------------------------------------------------------------------------------
 void data_dump(t_cat *cat){
@@ -39,17 +34,23 @@ void data_dump(t_cat *cat){
   t_data * data = 0;
   int fifo;
   pid_t child,parrent;
+
+  char parrent_str[6]; 
  
+  signal(SIGTERM, SIG_DFL);
+  
   fifo_file = tempnam(0,"traff");
+  DEBUG(printf("Using file %s\n",fifo_file);)
   parrent = getpid(); 
+  snprintf(parrent_str, 5, "%d", getpid());
   mkfifo(fifo_file,0600);
   
   //fprintf(stderr, "Going to fork\n");
   child = fork();
    
   if (child == 0) {
-    DEBUG(printf("Child calling execlp(%s,%s,%s,%s,%s,0)",cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file););
-    if (execlp(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,0) != 0 ) 
+    DEBUG(printf("Child calling execlp(%s,%s,%s,%s,%s,%s,0)",cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,parrent_str);)
+    if (execlp(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,parrent_str,0) != 0 ) 
         fprintf(stderr, "Error executing programm %s\nCalling Error %d: %s\n",cat->dump_programm,errno, strerror(errno));
     pthread_exit(0);
   } else if (child < 0) {
