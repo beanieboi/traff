@@ -36,17 +36,17 @@ void data_dump(t_cat *cat){
   char * fifo_file;
   t_data * data = 0;
   int fifo;
-  pid_t child;
+  pid_t child,parrent;
  
   fifo_file = tempnam(0,"traff");
-  
+  parrent = getpid(); 
   mkfifo(fifo_file,0600);
-
+  
   //fprintf(stderr, "Going to fork\n");
   child = fork();
    
   if (child == 0) {
-    if (execl(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,0) != 0 ) fprintf(stderr, "Error executing programm %s\nError: %s\n",cat->dump_programm,strerror(errno));
+    if (execl(cat->dump_programm,cat->dump_programm,fifo_file, cat->name,conf_file,parrent,0) != 0 ) fprintf(stderr, "Error executing programm %s\nError: %s\n",cat->dump_programm,strerror(errno));
     pthread_exit(0);
   } else if (child < 0) {
      fprintf(stderr, "Traff Dump Cat: %s: Error while forking at datadump\n",cat->name);

@@ -4,6 +4,10 @@ CC = gcc
 #CFLAGS= -Wall -DHAVE_IBM
 #LFLAGS= -lcurses
 
+# Directories
+BINDIR = /usr/local/sbin
+ETCDIR = /etc
+
 # fuer i386 auskommentieren
 CFLAGS= -g -D_REENTRANT
 LFLAGS = -lpcap -lpthread
@@ -21,10 +25,11 @@ EXECUTABLE_MYSQL = traff_mysql_dump
 
 
 
-all: $(EXECUTABLE) stdout mysql 
-# $(EXECUTABLE_2)
+default: all
 
-$(EXECUTABLE) :	$(MODULES)
+all: traff stdout mysql 
+
+traff :	$(MODULES)
 	$(CC) $(CFLAGS) $(MODULES) -o $(EXECUTABLE) $(LFLAGS)
 
 stdout :	$(MODULES_STDOUT)
@@ -32,6 +37,12 @@ stdout :	$(MODULES_STDOUT)
 
 mysql : $(MODULES_MYSQL)
 	$(CC) $(CFLAGS) $(MODULES_MYSQL) -o $(EXECUTABLE_MYSQL) $(LFLAGS_MYSQL)
+
+install : 
+	install -m 755 traff traff_mysql_dump traff_stdout_dump $(BINDIR)
+	install -m 755 traff.conf $(ETCDIR)
+	install -m 755 traff.initd $(ETCDIR)/init.d/traff
+	
 
 
 traff.o      : traff.c

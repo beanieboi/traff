@@ -1,0 +1,149 @@
+This is Info file ../info/traff, produced by Vim
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* traff: (widget).      Documenting the "traff" package used by the
+                           Emacs Custom facility.
+END-INFO-DIR-ENTRY
+
+
+File: traff,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
+
+Traff - Traffic Accounting Programm
+***********************************
+
+   Version: 0.3
+
+* Menu:
+
+* Introduction::
+* Configuration File::
+
+
+File: widget,  Node: Introduction,  Next: Configuration File,  Prev: Top,  Up: Top
+
+Introduction
+************
+
+   Welcome to Taff, the traffic accounting programm. Traff is a programm to 
+monitor you network and acocunt traffic by ip. You can configure traff in 
+different ways to best suit your needs. One big advantage is that you can 
+specify primary ips, which means, that only the information about that ips 
+will be computed.
+   Traff uses threads to output data, so while your are dumping your information 
+over a slow network no packege should be missed. Also it uses fifos to comunicate 
+with the sumping programm making it easy to create a own dumping-program that fits 
+your needs.
+   Traff is beeing developed by Hans Marcus Krüger (hanskruger@iname.com) at the 
+Univeristy on Dresden, Germany. The original files can be downloadded at 
+Sourceforge.net. It is released under GPL and help is welcome.
+
+
+File: widget,  Node: Configuration File,  Next: Top,  Prev: Introduction,  Up: Top
+
+Configuration File
+******************
+
+   The configuration file /etc/traff.conf holds all information traff needs to know 
+to be able to run. Here we will give a short description on its syntax. It can be 
+divided into two sections: global options and categories.
+
+Global Options:
+---------------
+
+  Device <device> [<device> [<device> [...]]]
+  	Takes a space-separated list of devices traff should listen on.
+   	Example:
+	     
+	     Device eth0 eth1
+
+  Period <integer> 
+  	Takes the number of seconds traff waits beetween two dumps
+        Example:
+
+	Period 600   # This will make traff dump evry 10 minut
+
+Categories:
+-----------
+
+  Traff can be configured to account in diferent manners for the same traffic. Each 
+manner represents a cetegory. each category starts with the keywork Cat followed by a 
+string, whicht my only contain [1-0,a-z,A-Z,_]. This string will be the name of the 
+category and should be unique for this configuration file. A category-statement stops
+with the beginnign of the next or the end of file. Inside a category the following 
+options may be speficied:
+
+  primary {account|ignore} IP MASK PORT
+  	In primary you can specify the first part of the rules. A IP must match one of
+	the primary rules successfully to be accounted (and it must match a secondery also).
+	You can specify as many primary rules as you want. the will be tested sequentially
+	as you inserted them into the configuration file. The first rule that matches will
+	cause traff to evaluate the tag. If it is set to account, traff will account the 
+	pakage, otherwise drop it if the tag ist set to ignore.
+	As you can see, the order matters.
+	
+	IP should be a ip of the format X.X.X.X where X are intergers between 0..255.
+	MASK follows the same format above.
+	PORT is a integer between 0..65535 and specify the port of the ip that is beeing 
+	checked. If it is set to zero any port will match.
+
+  	If a Package sucessfully matched a primary rule, it will be chacked agains secondary 
+	rules to see if it should be accounted or not, depinding, agian, on the tag set.
+	Only if the package matches a primary AND a secondary rule it will be accounted on 
+	that category.
+
+	TRaff has two standarst rules taht are appended on every chain (primary and secondary), 
+	which will return ignore. So, if you dont specify at least one primary and one secondary
+	rule traff will naver account anything.
+	
+	Example:
+
+	  primary ignore  192.168.2.0 255.255.255.0 0  # Rule 1
+	  primary account 192.168.0.0 255.255.0.0      # Rule 2
+	  secondary account 0.0.0.0 0.0.0.0 80	       # Rule 3
+	
+	The above example will account all http-traffic from 192.168.0.0 (Rule 2 and 3), exept for
+	Hosts in subnet 192.168.2.0.
+	
+  secondary {account|ignore} IP MASK PORT
+	See explenations on primary rules above
+  
+  sql HOST DATABASE TABLE USER PASSWORD
+        This entry is used by a dumping-programm, to connect to a sql-server. every table is 
+	required to the folowing fields:
+	    Name     Type      Description
+	    input    INTEGER   Takes the value of data recieved by that ip
+	    output   INTEGER   Takes the value of data sent by that ip
+	    ip	     CHAR(15)  Takes the ip
+	    timetag  INTEGER   Takes the integer part of th number of seconds 
+	    		       since epoch divided by timediver
+
+	The dumping programm is clever enought to determin if a update or a insert if to 
+	be executed (by trying to update first and if this fails it inserts). So you can set
+	your timedivider to 86400, and periode to 600 and you will update you DB avery 10 minutes,
+	and keep track of daily usae of each ip.
+  
+  timedivider INT
+        Takes an INTEGER NOT ZERO. This is used to generate the timetag in the SQL-dump. Please see
+	SQL entry for more information
+  
+  bytedivider
+  	If this is specified, dumping programms will divide all traffic-data with that number. 
+	This is intresting f you prefer to store your data in you database in kilobytes o megabytes.
+	this can be used to advoid overflows in you database. The division is only done at dump-time,
+	so you must take care to let traff dump its data bevore an internal overflow can happend.
+	Example:
+
+		bytedivider 1024 # this will store the ammount in kilobytes	    
+	
+ dump EXEC
+ 	This takes an executable that will be executed at a dump. So care is to be taken here to advoid
+	any exploids. The programm is executed with the following arqguments:
+		FIFO FIlename - The filename where data will be dumped into
+		Category      -	The name of the catogory
+		Conf File     - Configuration File used by Traff
+		PPID	      - The Parrents PID
+	Probably you will want to use some ready programms for this like traff_stdout_dump or 
+	traff_mysql_dump.
+		
+
