@@ -1,2 +1,22 @@
+TODO for release (1.0)
 
--readconfig.c must be written. 2 Functions. Is should read the configuration file and initile t_confic config. If you are intrested in helping me with this write me an email.
+2001-08-19: Memory leakadge - I believe that the re is a momory-laekaghe somewhere 
+in the programm. I does not stop growing.
+
+2001-08-19: Configuration script/install-script - Installation and configutration must 
+become easier. Usercmust be able to specify what dump-programms should be compiled.
+
+2001-08-19: Documentation for the configuration file and manpages
+
+2001-08-19: Dumping programm to dump to text-file and binary-file
+
+2001-08-19: Dumping programm to dump into a postgresql-databse, documentation, 
+small Howto on how to set up postgresql database
+
+2001-08-09: Documentations and small howto to Mysql-dumping programm
+
+2001-08-19: a lot of features to the main-programm that I will do in the next few weeks
+
+So, there ist still a lot to do, and help would be very appriciated. Please contact me 
+if you a re willing to help (hanskruger@iname.com)
+

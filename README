@@ -1,7 +1,91 @@
-Traff
-Author: Hans Marcus Krüger (hanskruger@iname.com)
+	Traff - Traffic Accounting Programm
+	Version 0.3
+	(c) 2001 - Hans Marcus Krüger
+	
 
-26 July 2001:
-This package is not functionall yet. I am uploading it so some friends can help me finding some errors. But you are interested in having a functional package, I suggest you visit this site again in some days :)
+WHAT IS IT? 
 
+  Traff is a programm that attaches itself to ine or more network interfaces, 
+  sniffs all IP-packeges passing at it and accounts each packets size. The collected 
+  information can be dumped to a mysql-Database, for further processing.
+
+HOW DOES IT WORK?
+  The whole thing about traff, is that you can specify for what ip you want to account 
+  the traffic, and even for what ips talking with witch peer. This means, that if you 
+  have a big uplink and you want to discover how much each or some hosts on your network 
+  are using this uplink, you can do that without caring about the other ip, as other 
+  programs do. So much less data will be stored at your database.
+  The prgramm runs as a deamon and periodicaly will dump all information collected to the 
+  database. In futere more databeses will be availibel, and writing the code for our own
+  needs ist not difficult at all, as the dump is done using a FIFO and a programm that is 
+  specified in the configutration file.
+  
+  An Example:
+  Currently this programm is beeing developed for a big student network (AG-DSN) connected 
+  to the university TU-Dresden over a 100MBit FX-cable. We have 8 subnets (S0..S7) and would
+  like to connect data for University-Intern traffic (UN-INT), but not Student-intern-traffic, and 
+  University-extern traffic (UN-Ext).
+  so we have to rules, the first accounting everythig for hots in S0..S7 and going to UN-INT, 
+  and the second, accounting everytinh fo S0..S7 going tu UN-EXT. But out database will only hold 
+  infoirmation about hosts in S0..S7, reducing a lot the size of our database, which can grow quiet
+  big, if you consider that we have 1200 users. Every 5 minutes the data is dumped into a MySQL-Database. 
+  our Data is collected on a dailybase. The conversion is done by the dumping-programm, 
+  so that no aditional scripts are needed neither no further processing.
+   
+UPDATE
+  
+  Update-information can be found in file UPDATE
+
+INSTALLATION / PRECONDITIONS
+  
+  The script is beeing developed under Debian running kernel 2.4.x, but it should run on diferent 
+  kernel versions and different distributions. You must pay attention if you compile your kernel. 
+  keep in mind that the option CONFIG_PACKET must be compiled in. Generaly, if tcpdump works, traff
+  should work as well.
+  What you will need is pcap- and Mysql- libaries and header files to compile traff.
+  If all preconditions are met you can begin by
+
+    1. unpacking the sources 
+    2. changing to that directory and type make
+    3. copy the file traff.conf to /etc and modify it to satisfy your needs
+    4. copy all executables to /usr/local/sbin
+    5. copy traff.initd to /etc/init.d/traff or the equivalent directory on your system
+    6. set up your mysql-database
+    7. start the programm with /etc/init.d/traff start
+  
+  As Time goes by I will automate intallation an add more detailed inforamtion here.
+
+BUGS/UPDATES
+
+  Please report any bugs directly to me via email. Updates and new versions can be optained 
+  at the projects repository at sourceforge.net.
+
+  For the very new versions use the CVS-Versions. Information about this can also be optained at
+  the projects repository at sourceforge.net.
+
+
+CONTRIBUTIONS
+  
+  Cntributions are wellcome. Please sent to to me via email.
+
+COPYRIGHT
+ 
+  Copyright (C) 2001 - Hans Marcus Krüger
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+     
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+		      
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+				     
+  The author can be reached via email: hanskruger@iname.com
+						        
 
