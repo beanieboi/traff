@@ -2,7 +2,7 @@
 #ifndef READCONFIG_H
 #define READCONFIG_H
 
-#define VERSION "0.6"
+#define VERSION "0.6.1"
 
 #define TEXTLEN 32 
 #define FILELENGTH 1024
@@ -17,6 +17,8 @@
 #include <postgresql/libpq-fe.h>
 #endif
 
+#include <stdlib.h>
+#include <errno.h>
 #include <pcap.h> 
 #include <pthread.h> 
 //#include "ip_table.h"
@@ -41,6 +43,7 @@ static struct {
       { "--Error: Bad Option--", dt_BadOption },
       { NULL, 0 }
 };
+
 
 typedef struct t_ip_filter {
   U_INT ip;

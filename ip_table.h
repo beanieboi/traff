@@ -40,10 +40,11 @@ void * ip_table_get_entry(t_table * table, unsigned int ip);
 int ip_table_count(t_table * table);
 int ip_table_insert(t_table * table, unsigned int ip, void * pointer);
 int ip_table_destroy_table(t_table * table);
-
+int ip_table_count_in_mag(t_IP_MAG * mag, int level);
+void cipa(unsigned int ip, unsigned char cip[]);
 //void ip_table_regen_next(int cip, int level, unsigned int * next);
 //void * ip_table_get_next_entry(t_IP_MAG * mag, int level, unsigned int * next);
 //void * ip_table_fetch_next(table * tableroot, unsigned int ip);
-
+void * ip_table_fetch_next(t_table * table);
 
 #endif

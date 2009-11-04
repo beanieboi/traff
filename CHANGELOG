@@ -1,30 +1,51 @@
-	-- Mon Jan 28 21:29:00 CET 2002 Hans M Krüger hanskruger@iname.com
-
-  * Very big changes in this one. First of all, module Data and all external dump-programms
-    are history. All necessary datafunctions where copy-n-pasted to traff.c. The different 
-    dump-procedures where intergrated into traff.c as well. Now there is a dump-function (data_mysql_dump,
-    data_stdout_dump etc.) for each functionality.
-    Therefore some changes in the configuration-file where necesary. Option sql does not exists any more. 
-    Instead od 
-      dump <filename>
-    you now have to write
-      dump [ stdout | syslog | textfile <filename> | binfile <filename> | [ { mysql | pgsql } \
-      host database table user password ]
- 
-  * Also in traff.c, I implemented a whoile new structure. Now we have a central queue. This queue is 
-    filled by small functions that a executed by pthread_create and only catches the packet from
-    the network. This queue is protected by 2 semaphores and 1 mutex. The mutex protects the queue so 
-    only one can write or read at a time. The 2 semaphores are used to advoid busy-waiting. 
-
-  * I dropped the timer-function, for now. Again, time(0) is executed after aech processed package. 
-
-  * ip_table.c: I created a structure t_table that ca hold more than just the pointer to the table. Now
-    there is a  int next as well. therefore it is no longer necessary to supply the last IP to 
-    ip_table_get_netxt() function. Also this in function and in ip_table_destroy_table I changed the 
-    recursion to 4 nested for-loops. This took me some problems I had with starting at the point I 
-    last stopped. Also, this code is easier to understand.
-
-  * The length of a packet is now calculated using pcap's pcap_pkthdr->len (length off-wire).
+  -- Wed Nov  4 11:16:23 EST 2009 Matt Dormer mdormat@users.sourceforge.net
+	
+	* Updated the Makefile to include make option -Wall for better debuging.
+	
+	* ip_table.h Created definitions for ip_table_count_in_mag, cpia and ip_table_fetch_next.
+	
+	* Cleaned up calls in traff.c for ip_table_fetch_next and ip_table_destroy_table.
+	
+	* Removed or commented out unused variables in all files.
+	
+	* Added 'return 0;' to the end of the config_read_config_file function.
+	
+	* Added includes stdlib.h and errno.h to readconfig.h to remove compilation error with 
+	  external referances.
+	
+	* Corrected pthread_t definition and corrected pthread calls in traff.c -- Bug 585102 Seg Fault
+	
+	* Updated the calls for mysql from mysql_connect to mysql_real_connect
+	
+	* changed multiple instiances of %d to %ld when using timetags in snprintf and syslog calls
+	
+  -- Mon Jan 28 21:29:00 CET 2002 Hans M Krüger hanskruger@iname.com
+	
+	* Very big changes in this one. First of all, module Data and all external dump-programms
+	  are history. All necessary datafunctions where copy-n-pasted to traff.c. The different 
+	  dump-procedures where intergrated into traff.c as well. Now there is a dump-function (data_mysql_dump,
+	  data_stdout_dump etc.) for each functionality.
+	  Therefore some changes in the configuration-file where necesary. Option sql does not exists any more. 
+	  Instead od 
+	    dump <filename>
+	  you now have to write
+	    dump [ stdout | syslog | textfile <filename> | binfile <filename> | [ { mysql | pgsql } \
+	    host database table user password ]
+	
+	* Also in traff.c, I implemented a whoile new structure. Now we have a central queue. This queue is 
+	  filled by small functions that a executed by pthread_create and only catches the packet from
+	  the network. This queue is protected by 2 semaphores and 1 mutex. The mutex protects the queue so 
+	  only one can write or read at a time. The 2 semaphores are used to advoid busy-waiting. 
+	
+	* I dropped the timer-function, for now. Again, time(0) is executed after aech processed package. 
+	
+	* ip_table.c: I created a structure t_table that ca hold more than just the pointer to the table. Now
+	  there is a  int next as well. therefore it is no longer necessary to supply the last IP to 
+	  ip_table_get_netxt() function. Also this in function and in ip_table_destroy_table I changed the 
+	  recursion to 4 nested for-loops. This took me some problems I had with starting at the point I 
+	  last stopped. Also, this code is easier to understand.
+	
+	* The length of a packet is now calculated using pcap's pcap_pkthdr->len (length off-wire).
   
   -- Wed Jan  2 00:19:05 CET 2002  Klaus Deissner  kdeissner@users.sourceforge.net
 

@@ -81,7 +81,6 @@ int config_read_config_file(t_config * config,char * filename) {
   //This function will read out Configuration file
   FILE *conf_file;
   char line[1024], *s,*keyword,*arg;
-  extern int errno;
   int linenum =0;
   e_opcodes opcode;
   t_cat * cat = 0;
@@ -262,7 +261,7 @@ int config_read_config_file(t_config * config,char * filename) {
     }
   }
   fclose(conf_file);
-
+  return 0;
 }       
 
 //---------------------------------------------------------------------------------

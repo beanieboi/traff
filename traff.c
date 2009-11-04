@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <pcap.h>
+#include <assert.h>
 #include <signal.h>
 #include <limits.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@
 #include <pthread.h>                                                                               
 #include <syslog.h>
 #include "readconfig.h"
+#include "ip_table.h"
 
 // added by KD
 #include <semaphore.h>
@@ -104,13 +106,13 @@ t_config *config;
 
 //-----------------------------------------------------------------------------------
 int main (int argc, char *argv[]) {
-  int i;
-  int * nic_listen_list;
-  int * child;
+  //int i;
+  //int * nic_listen_list;
+  //int * child;
   t_cat * cat;
   t_cat * old_cat; 
   pthread_attr_t  pthread_attr_detach;
-  pthread_t * thread;
+  pthread_t thread;
   t_interface_list * device;                
   t_raw_data packet;
     
@@ -197,8 +199,9 @@ int main (int argc, char *argv[]) {
 	syslog(LOG_INFO,"Dumping category %s",cat->name );
 	DEBUG(printf("Dumping Category %s\n",cat->name);)
 	old_cat = malloc(sizeof(t_cat));
+	assert ( old_cat );
 	memcpy(old_cat, cat, sizeof(t_cat));
-	pthread_create(thread, &pthread_attr_detach, (void*) data_dump, (void*) old_cat);
+	pthread_create(&thread, &pthread_attr_detach, (void*) data_dump, (void*) old_cat);
 	cat = cat->next;
       }
     }
@@ -229,10 +232,10 @@ void catch_signal(int signal) {
 void fill_queue(t_interface_list * device) {
   // this functions attaches itself to the device stored in device und starts dumping data into the queue
   char buff[PCAP_ERRBUF_SIZE];
-  unsigned char *raw_pkt;
-  struct pcap_pkthdr pkthdr;
-  t_account account_inf;
-  pthread_t thread;
+  //unsigned char *raw_pkt;
+  //struct pcap_pkthdr pkthdr;
+  //t_account account_inf;
+  //pthread_t thread;
 
   // first atach to nic
   DEBUG(printf("Opening Device %s\n",device->name);)
@@ -335,7 +338,7 @@ void init_queue(void) {
 }
 //-----------------------------------------------------------------------------------
 void delete_queue(void) {
-  int i;
+  //int i;
   queue_read_pointer = -1;
   queue_write_pointer = -1;
   DEBUG(printf("Deleting queue\n");)
@@ -468,7 +471,7 @@ int data_mysql_dump (t_cat * cat) {
   DEBUG(printf("Initializing Mysql\n");)
   mysql_init(&mysql);
   DEBUG(printf("Connecting to host %s, db %s, table %s using login %s, password %s\n",cat->sql->host,cat->sql->db, cat->sql->table,cat->sql->user,cat->sql->password);)
-  mysql_connect(&mysql,cat->sql->host,cat->sql->user,cat->sql->password);
+  mysql_real_connect(&mysql,cat->sql->host,cat->sql->user,cat->sql->password,cat->sql->db,0,NULL,0);
   if (mysql_errno(&mysql)) {
     fprintf(stderr,"Error connecting to Mysql-Database in category %s:\n%d, %s\n",cat->name,  mysql_errno(&mysql),mysql_error(&mysql));
     syslog(LOG_ERR,"Error connecting to Mysql-Database in category %s:\n%d, %s\n",cat->name, mysql_errno(&mysql),mysql_error(&mysql));
@@ -482,13 +485,13 @@ int data_mysql_dump (t_cat * cat) {
   }
 
   DEBUG(printf("Starting dump of each line\n");)
-  while (data = (t_data *) ip_table_fetch_next(cat->table) ) {
+  while ((data = (t_data *) ip_table_fetch_next(cat->table) )) {
     data->input = (int)(data->input / bytediv);
     data->output = (int)(data->output / bytediv);
     if ((data->input == 0) && (data->output == 0)) continue; // we will not dump lines where both counters are null.
     cipa(data->ip, ips);// convert int-ip into quaud-for-notation.
     DEBUG(printf("Dumping ip %d.%d.%d.%d\n",ips[0],ips[1],ips[2],ips[3]);)
-    snprintf(my_query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\"%d.%d.%d.%d\" and timetag=%d",cat->sql->table,data->input,data->output,ips[0],ips[1],ips[2],ips[3],timetag);
+    snprintf(my_query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\"%d.%d.%d.%d\" and timetag=%ld",cat->sql->table,data->input,data->output,ips[0],ips[1],ips[2],ips[3],timetag);
     DEBUG(printf("Query: %s\n", my_query);)
     
     if (mysql_query(&mysql,my_query)){
@@ -497,7 +500,7 @@ int data_mysql_dump (t_cat * cat) {
     }
     DEBUG(printf("Error: %s, Affected Rows: %d\n",mysql_error(&mysql), mysql.affected_rows );)  
     if (! mysql.affected_rows) {
-      snprintf(my_query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%d,%d,%d)",cat->sql->table,ips[0],ips[1],ips[2],ips[3],timetag,data->input,data->output);
+      snprintf(my_query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%ld,%d,%d)",cat->sql->table,ips[0],ips[1],ips[2],ips[3],timetag,data->input,data->output);
       DEBUG(printf("First entry: using query:  %s\n",my_query);)
       mysql_query(&mysql,my_query);
       DEBUG(printf("%s\n",mysql_error(&mysql));)  
@@ -540,17 +543,17 @@ int data_pgsql_dump (t_cat * cat) {
   // If we should dump data to a pgsql-db, then open connection here
   pg_conn = PQsetdbLogin(cat->sql->host,"","",NULL,cat->sql->db,cat->sql->user,cat->sql->password);
   if (PQstatus(pg_conn) == CONNECTION_BAD) {
-    syslog(LOG_ERR,"Error in dump of category %s while connecting to PGSQL-Database:\n%d, %s\n", cat->name, PQerrorMessage(pg_conn), PQerrorMessage(pg_conn));
+    syslog(LOG_ERR,"Error in dump of category %s while connecting to PGSQL-Database:\n%s, %s\n", cat->name, PQerrorMessage(pg_conn), PQerrorMessage(pg_conn));
     return 1;
   }
-  while (data = (t_data *) ip_table_fetch_next(cat->table) ) {
+  while ((data = (t_data *) ip_table_fetch_next(cat->table) )) {
     data->input = (int)(data->input / bytediv);
     data->output = (int)(data->output / bytediv);
     if ((data->input == 0) && (data->output == 0)) continue; // we will not dump lines where both counters are null.
     cipa(data->ip, ips);// convert int-ip into quaud-for-notation.
     // do something
 
-      snprintf(pg_query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\'%d.%d.%d.%d\' and timetag=%d",cat->sql->table,data->input,data->output,ips[0],ips[1],ips[2],ips[3],timetag);
+      snprintf(pg_query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\'%d.%d.%d.%d\' and timetag=%ld",cat->sql->table,data->input,data->output,ips[0],ips[1],ips[2],ips[3],timetag);
       DEBUG(printf("Query: %s\n", pg_query);)
 	//First we will try to update an existing entry
       pg_res = PQexec(pg_conn,pg_query);
@@ -563,7 +566,7 @@ int data_pgsql_dump (t_cat * cat) {
       }
       //if update fails, then we should insert.
       if (! atoi(PQcmdTuples(pg_res))) {
-      	snprintf(pg_query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\'%d.%d.%d.%d\',%d,%d,%d)",cat->sql->table,ips[0],ips[1],ips[2],ips[3],timetag,data->input,data->output);
+      	snprintf(pg_query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\'%d.%d.%d.%d\',%ld,%d,%d)",cat->sql->table,ips[0],ips[1],ips[2],ips[3],timetag,data->input,data->output);
         DEBUG(printf("First entry: using query:  %s\n",pg_query);)
         pg_res = PQexec(pg_conn,pg_query);
         if (!pg_res || PQresultStatus(pg_res) != PGRES_COMMAND_OK){
@@ -589,11 +592,11 @@ int data_pgsql_dump (t_cat * cat) {
 int data_stdout_dump (t_cat * cat) {
   extern int errno;
   t_data * data = 0;
-  int fifo;
+  //int fifo;
   time_t timetag;
   u_char ips[4]; 
   char timestr[26];
-  FILE * dumpfile;
+  //FILE * dumpfile;
   int bytediv;  
 
   if(cat->bytedivider > 0) 
@@ -612,12 +615,12 @@ int data_stdout_dump (t_cat * cat) {
   }
 
   //  data = (t_data *) ip_table_fetch_next(cat->table,0);
-  while (data = (t_data *) ip_table_fetch_next(cat->table) ) {
+  while ( (data = (t_data *) ip_table_fetch_next(cat->table) ) ) {
     data->input = (int)(data->input / bytediv);
     data->output = (int)(data->output / bytediv);
     if ((data->input == 0) && (data->output == 0)) continue; // we will not dump lines where both counters are null.
     cipa(data->ip, ips);// convert int-ip into quaud-for-notation.
-    printf("IP: %03d.%03d.%03d.%03d input: %8d output: %8d timetag: %8d\n",ips[0],ips[1],ips[2],ips[3],data->input,data->output,timetag);
+    printf("IP: %03d.%03d.%03d.%03d input: %8d output: %8d timetag: %8ld\n",ips[0],ips[1],ips[2],ips[3],data->input,data->output,timetag);
   }
   return 0;
 }
@@ -639,10 +642,10 @@ int data_syslog_dump (t_cat * cat) {
     timetag = time(0);
   }
 
-  while (data = (t_data *) ip_table_fetch_next(cat->table) ) {
+  while ( ( data = (t_data *) ip_table_fetch_next(cat->table) ) ) {
     data->input = (int)(data->input / bytediv);
     data->output = (int)(data->output / bytediv);
-    syslog(LOG_NOTICE,"Cat: %s IP: %03d.%03d.%03d.%03d input: %8d output: %8d timetag: %8d\n",cat->name, ips[0],ips[1],ips[2],ips[3],data->input,data->output,timetag);
+    syslog(LOG_NOTICE,"Cat: %s IP: %03d.%03d.%03d.%03d input: %8d output: %8d timetag: %8ld\n",cat->name, ips[0],ips[1],ips[2],ips[3],data->input,data->output,timetag);
   }
   return 0;
 }
@@ -676,13 +679,13 @@ int data_textfile_dump (t_cat * cat) {
     timetag = time(0);
   }
 
-  while (data = (t_data *) ip_table_fetch_next(cat->table) ) {
+  while ( ( data = (t_data *) ip_table_fetch_next(cat->table) ) ) {
     data->input = (int)(data->input / bytediv);
     data->output = (int)(data->output / bytediv);
     if ((data->input == 0) && (data->output == 0)) continue; // we will not dump lines where both counters are null.
     cipa(data->ip, ips);// convert int-ip into quaud-for-notation.
     // do something
-    fprintf(dumpfile,"Cat: %s IP: %03d.%03d.%03d.%03d input: %8d output: %8d timetag: %8d\n",cat->name,ips[0],ips[1],ips[2],ips[3],data->input,data->output,timetag);
+    fprintf(dumpfile,"Cat: %s IP: %03d.%03d.%03d.%03d input: %8d output: %8d timetag: %8ld\n",cat->name,ips[0],ips[1],ips[2],ips[3],data->input,data->output,timetag);
   }
 
   fclose(dumpfile);
@@ -712,7 +715,7 @@ int data_binfile_dump (t_cat * cat) {
   } else {
     timetag = time(0);
   }
-  while (data = (t_data *) ip_table_fetch_next(cat->table) ) {
+  while ( ( data = (t_data *) ip_table_fetch_next(cat->table) ) ) {
     data->input = (int)(data->input / bytediv);
     data->output = (int)(data->output / bytediv);
     if ((data->input == 0) && (data->output == 0)) continue; // we will not dump lines where both counters are null.
@@ -727,17 +730,17 @@ int data_binfile_dump (t_cat * cat) {
   return 0;
 }
 //------------------------------------------------------------------------------------
-void data_destroy_table(void* table) {
+void data_destroy_table(void * table) {
   // This function will clean up. It will release the memory allocated by data, ask 
   // ip_table to destroy the table. 
 
   t_data * data = 0;
   unsigned int ip = 0;
-  unsigned char cip[4];                                                                            
+  //unsigned char cip[4];                                                                            
 
   //fprintf(stderr, "data_destroy_table: Fetching first entry\n");
   //fprintf(stderr, "entries in table: %d\n",ip_table_count(table));
-  data = (t_data *) ip_table_fetch_next(table,0);
+  data = (t_data *) ip_table_fetch_next(table);
   while (data) {
     //lets cycle through the table...
     ip = (data->ip);
@@ -745,16 +748,16 @@ void data_destroy_table(void* table) {
     ip_table_insert(table,ip,0); // Set the pointer to this entry to 0;
     if (ip != 0xffffffff) {
       ip++;      
-      data = (t_data *) ip_table_fetch_next(table,ip);
+      data = (t_data *) ip_table_fetch_next(table);
     } else data = 0;
   }
   // now we can ask ip_table to free the rest
   //fprintf(stderr, "data_destroy_table: passing over to ip_table_destroy_table\n");  
-  ip_table_destroy_table(table,0);
+  ip_table_destroy_table(table);
 }
 //------------------------------------------------------------------------------------
 int data_match_rule(t_ip_filter *filter,  t_raw_data * data, int i) {
-  t_ip_filter *tempfilter = filter;
+  //t_ip_filter *tempfilter = filter;
 
   // cycle through all filters, by return on first match
   while (filter) {
@@ -778,7 +781,7 @@ int data_match_rule(t_ip_filter *filter,  t_raw_data * data, int i) {
 //-------------------------------------------------------------------------------------
 void data_account(t_cat *cat, t_raw_data * data) {
   int i;
-  char cip[4];
+  //char cip[4];
   t_data * temp_pkt = NULL;
   
   // check the packet
@@ -820,7 +823,7 @@ void data_print_info(t_cat *cat) {
   printf("Detailed information on %s\n", cat->name);
   printf("Number of entries in Table: %d\n", ip_table_count(cat->table));
 
-  data = (t_data *) ip_table_fetch_next(cat->table,0);
+  data = (t_data *) ip_table_fetch_next(cat->table);
   while (data) {
     ip = (data->ip);
     cipa(ip,cip);
@@ -828,7 +831,7 @@ void data_print_info(t_cat *cat) {
     
     if (ip != 0xffffffff) {
       ip++;      
-      data = (t_data *) ip_table_fetch_next(cat->table,ip);
+      data = (t_data *) ip_table_fetch_next(cat->table);
     } else data = 0;
   }
   

@@ -9,9 +9,9 @@ BINDIR = /usr/local/sbin
 ETCDIR = /etc
 
 # fuer i386 auskommentieren
-CFLAGS = -g -D_REENTRANT -DwithMYSQL -DwithPGSQL
+CFLAGS = -g -D_REENTRANT -DwithMYSQL -DwithPGSQL -Wall
 
-LFLAGS =  -lpcap -lpthread -lpq -lmysqlclient
+LFLAGS = -lpcap -lpthread -lpq -lmysqlclient
 
 MODULES = traff.o readconfig.o ip_table.o
 
