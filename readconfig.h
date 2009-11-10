@@ -1,3 +1,4 @@
+#include "config.h"
 
 #ifndef READCONFIG_H
 #define READCONFIG_H
@@ -9,7 +10,7 @@
 #define LONGTEXT 32
 #define QUERYLENGTH 1024
 
-#if withMYSQL
+#if HAVE_LIBMYSQLCLIENT
 #include <mysql/mysql.h>
 #endif
 

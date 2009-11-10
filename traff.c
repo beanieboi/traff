@@ -28,6 +28,7 @@
 #include <syslog.h>
 #include "readconfig.h"
 #include "ip_table.h"
+#include "config.h"
 
 // added by KD
 #include <semaphore.h>

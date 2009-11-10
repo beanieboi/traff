@@ -28,7 +28,7 @@
 //#include <time.h>
 //#include <netinet/in.h>
 #include "readconfig.h"
-
+#include "config.h"
 
 void data_account(t_cat *cat, t_raw_data * data);
 void data_cipa(unsigned int ip, unsigned char cip[]);
