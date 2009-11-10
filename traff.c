@@ -264,7 +264,7 @@ void print_config() {
 
   sem_getvalue(&sem_queue_free,&buffer_free);
 
-#if withMYSQL
+#if HAVE_LIBMYSQLCLIENT
   printf("Compiled with MySQL support\n");
 #endif
 #if withPGSQL
@@ -445,7 +445,7 @@ void data_dump(t_cat *cat) {
 }
 //------------------------------------------------------------------------------------
 int data_mysql_dump (t_cat * cat) {
-#if withMYSQL
+#if HAVE_LIBMYSQLCLIENT
   t_data * data = 0;
   u_char ips[4]; 
   int bytediv;  
