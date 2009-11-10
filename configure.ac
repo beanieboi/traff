@@ -12,7 +12,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 
 AC_ARG_ENABLE([mysql],
-            [AS_HELP_STRING([--with-mysql],
+            [AS_HELP_STRING([--enable-mysql],
               [Support MYSQL database dumping @<:@default=check@:>@])],
             [],
             [with_mysql=no])
@@ -22,12 +22,12 @@ AC_ARG_ENABLE([mysql],
             [AC_CHECK_LIB([mysqlclient], [mysql_real_connect],,
               [if test "x$with_mysql" != xcheck; then
                  AC_MSG_FAILURE(
-                   [--with-mysql was given, but test for mysqlclient failed])
+                   [--enable-mysql was given, but test for mysqlclient failed])
                fi
               ])])
 
 AC_ARG_ENABLE([postgresql],
-            [AS_HELP_STRING([--with-postgresql],
+            [AS_HELP_STRING([--enable-postgresql],
               [Support PostgreSQL database dumping])],
             [],
             [with_PostgreSQL=no])
@@ -37,7 +37,7 @@ AC_ARG_ENABLE([postgresql],
             [AC_CHECK_LIB([pq], [PQsetdbLogin],,
               [if test "x$with_postgresql" != xcheck; then
                  AC_MSG_FAILURE(
-                   [--with-postgresql was given, but test for libpq failed])
+                   [--enable-postgresql was given, but test for libpq failed])
                fi
               ])])
 

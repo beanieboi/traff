@@ -1276,8 +1276,8 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking Speeds up one-time builds
   --enable-dependency-tracking  Do not reject slow dependency extractors
-  --with-mysql            Support MYSQL database dumping [default=check]
-  --with-postgresql       Support PostgreSQL database dumping
+  --enable-mysql          Support MYSQL database dumping [default=check]
+  --enable-postgresql     Support PostgreSQL database dumping
 
 Some influential environment variables:
   CC          C compiler command
@@ -3400,9 +3400,9 @@ _ACEOF
 
 else
   if test "x$with_mysql" != xcheck; then
-                 { { echo "$as_me:$LINENO: error: --with-mysql was given, but test for mysqlclient failed
+                 { { echo "$as_me:$LINENO: error: --enable-mysql was given, but test for mysqlclient failed
 See \`config.log' for more details." >&5
-echo "$as_me: error: --with-mysql was given, but test for mysqlclient failed
+echo "$as_me: error: --enable-mysql was given, but test for mysqlclient failed
 See \`config.log' for more details." >&2;}
    { (exit 1); exit 1; }; }
                fi
@@ -3493,9 +3493,9 @@ _ACEOF
 
 else
   if test "x$with_postgresql" != xcheck; then
-                 { { echo "$as_me:$LINENO: error: --with-postgresql was given, but test for libpq failed
+                 { { echo "$as_me:$LINENO: error: --enable-postgresql was given, but test for libpq failed
 See \`config.log' for more details." >&5
-echo "$as_me: error: --with-postgresql was given, but test for libpq failed
+echo "$as_me: error: --enable-postgresql was given, but test for libpq failed
 See \`config.log' for more details." >&2;}
    { (exit 1); exit 1; }; }
                fi
