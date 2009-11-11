@@ -1,0 +1,23 @@
+INSTALLATION / PRECONDITIONS
+  
+  The script is being developed under Debian running kernel 2.6.x, but it should run on different 
+  kernel versions and different distributions. You must pay attention if you compile your kernel. 
+  keep in mind that the option CONFIG_PACKET must be compiled in. Generally, if tcpdump works, Traff
+  should work as well.
+  What you will need is pcap- and optionally Mysql- and PgSQL- libraries and header files to compile Traff.
+  If all preconditions are met you can begin by
+
+    1. Unpacking the sources 
+    2. Run ./configure -- you may want to run ./configure --help to enable options: --enable-mysql --enable-postgresql
+    5. Type make install
+       Make install will copy binary files to /usr/local/bin. If you don like this, edit
+       the Makefile or install manually.
+    6. Change the configuration-file /etc/traff.conf to suit to your needs
+    7. Start traff.
+
+    8. -Optionally- 
+       There is a initd-script for traff called traff.initd. This script was intended to run
+       on Debian systems. You my need to change it if you use another distribution. With this script 
+       you can configure you system to start traff at boot-time. Please remember to start traff only 
+       _after_ you set up your network.
+

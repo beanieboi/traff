@@ -1,5 +1,5 @@
 	Traff - Traffic Accounting Program
-	Version 0.6
+	Version 0.7
 
 WHAT IS IT? 
 
@@ -26,7 +26,7 @@ UPDATE
 
 INSTALLATION / PRECONDITIONS
   
-  The script is being developed under Debian running kernel 2.4.x, but it should run on different 
+  The script is being developed under Debian running kernel 2.6.x, but it should run on different 
   kernel versions and different distributions. You must pay attention if you compile your kernel. 
   keep in mind that the option CONFIG_PACKET must be compiled in. Generally, if tcpdump works, Traff
   should work as well.
@@ -34,26 +34,11 @@ INSTALLATION / PRECONDITIONS
   If all preconditions are met you can begin by
 
     1. Unpacking the sources 
-    2. Edit the Makefile-file
-       - if you want to compile Traff with PgSQL-support exchange the lines
-           CFLAGS = -g -D_REENTRANT -DwithMYSQL -DwithPGSQL
-           LFLAGS =  -lpcap -lpthread -lpq -lmysqlclient
-         to
-           CFLAGS = -g -D_REENTRANT -DwithPGSQL
-           LFLAGS =  -lpcap -lpthread -lpq
-       - if you want to have mysql-support change the lines to
-           CFLAGS = -g -D_REENTRANT -DwithMYSQL
-           LFLAGS =  -lpcap -lpthread -lmysqlclient
-       - and if you want no SQL-support at all:
-           CFLAGS = -g -D_REENTRANT
-           LFLAGS =  -lpcap -lpthread
-  
-    3. Check in readconfig.h if the PgSQL and/or MySQL inlcude headers are correct for your system.
-    4. Changing to that directory and type make
+    2. Run ./configure -- you may want to run ./configure --help to enable options: --enable-mysql --enable-postgresql
     5. Type make install
-       Make install will copy binary files to /usr/local/sbin. If you don like this, edit
+       Make install will copy binary files to /usr/local/bin. If you don like this, edit
        the Makefile or install manually.
-    6. Change he configuration-file /etc/traff.conf to suit to your needs
+    6. Change the configuration-file /etc/traff.conf to suit to your needs
     7. Start traff.
 
     8. -Optionally- 
@@ -74,17 +59,15 @@ BUGS/UPDATES
 
 CONTRIBUTIONS
 
-  Contributions are welcome. Please sent to to me via email.
+  Contributions are welcome. Please sent to to us via email.
 
 TODO
-  - Make traff to read command-line arguments (ex.: -f <configuration-file>)
-  - Make a ./configure script
   - Test it and see if it works correctly :)
 
 COPYRIGHT
  
   Copyright (C) 2001 - Hans Marcus Krüger <hanskruger@iname.com>, 
-  
+  Matthew Dormer <mdormat@users.sourceforge.com>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -100,6 +83,6 @@ COPYRIGHT
   along with this program; if not, write to the Free Software
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 				     
-  The author can be reached via email: hanskruger@iname.com
+  The authors can be reached via email addresses above
 						        
 
