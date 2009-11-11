@@ -668,6 +668,7 @@ INSTALL_STRIP_PROGRAM
 AWK
 SET_MAKE
 am__leading_dot
+CYCLE_OBJ
 CC
 CFLAGS
 LDFLAGS
@@ -2148,6 +2149,15 @@ INSTALL_STRIP_PROGRAM="\${SHELL} \$(install_sh) -c -s"
 
 
 ac_config_headers="$ac_config_headers config.h"
+
+
+case $host in
+  alpha*-*-*) CYCLE_OBJ=rpcc.o ;;
+  i?86-*-*) CYCLE_OBJ=rdtsc.o ;;
+  *) CYCLE_OBJ=""
+      ;;
+esac
+
 
 
 # Checks for programs.
@@ -6343,6 +6353,7 @@ INSTALL_STRIP_PROGRAM!$INSTALL_STRIP_PROGRAM$ac_delim
 AWK!$AWK$ac_delim
 SET_MAKE!$SET_MAKE$ac_delim
 am__leading_dot!$am__leading_dot$ac_delim
+CYCLE_OBJ!$CYCLE_OBJ$ac_delim
 CC!$CC$ac_delim
 CFLAGS!$CFLAGS$ac_delim
 LDFLAGS!$LDFLAGS$ac_delim
@@ -6366,7 +6377,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 76; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

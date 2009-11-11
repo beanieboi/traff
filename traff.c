@@ -29,6 +29,7 @@
 #include "readconfig.h"
 #include "ip_table.h"
 #include "config.h"
+#include <argp.h>
 
 // added by KD
 #include <semaphore.h>
@@ -37,10 +38,7 @@
 
 #define CAT_THREAD 0  //If this is set, threats will be created to account data
 #define DUMP 2   //0 will do nothing, 1 will use threads 2 will use fork
-
-//#define DEBUG(s) printf("%s(%d): ","traff",getpid()); s;
-//#define DEBUG(s) printf("traff(%d): ",getpid()); s;
-#define DEBUG(s)
+#define DEBUG(s) {if ( arguments.debug ) {s}} while (0);
 
 //typedef unsigned char U_CHAR;
 typedef struct {
@@ -105,6 +103,61 @@ t_raw_data * queue;
 pthread_mutex_t lock_queue;
 t_config *config;
 
+const char *argp_program_version = 
+PACKAGE_STRING "test";
+const char *argp_program_bug_address =
+"<mdormat@users.sourceforge.com>";
+
+/* Program documentation. */
+static char doc[] =
+"Traff -- Traff sniffs you network interfaces and accounts the traffic on a IP basis. \
+The configuration is very flexible allowing you to create different/multiple \
+accounting rules. The collected data is stored using Mysql, PgSQL, Syslog or files.\
+\v";
+
+/* A description of the arguments we accept. */
+static char args_doc[] = "";
+
+/* The options we understand. */
+static struct argp_option options[] = {
+{"debug",  'd', 0,       0, "Produce debug output" },
+{"config",  'c', "FILE",       0, "Configuration File default: /etc/traff.conf" },
+{ 0 }
+};
+
+/* Used by main to communicate with parse_opt. */
+struct arguments
+{
+int debug;   /* `-s', `-v', `--abort' */
+char *config;
+};
+
+/* Parse a single option. */
+static error_t
+parse_opt (int key, char *arg, struct argp_state *state)
+{
+/* Get the input argument from argp_parse, which we
+  know is a pointer to our arguments structure. */
+struct arguments *arguments = state->input;
+
+switch (key)
+ {
+ case 'd':
+   arguments->debug = 1;
+   break;
+ case 'c':
+   arguments->config = arg;
+   break;
+ default:
+   return ARGP_ERR_UNKNOWN;
+ }
+return 0;
+}
+
+/* Our argp parser. */
+static struct argp argp = { options, parse_opt, args_doc, doc };
+  struct arguments arguments;
+
 //-----------------------------------------------------------------------------------
 int main (int argc, char *argv[]) {
   //int i;
@@ -117,8 +170,19 @@ int main (int argc, char *argv[]) {
   t_interface_list * device;                
   t_raw_data packet;
     
-  DEBUG(printf("Debugging Mode Enabled\n");)
- 
+  int i, j;
+  
+  /* Default values. */
+  arguments.debug = 0;
+  arguments.config = "/etc/traff.conf";
+  
+  /* Parse our arguments; every option seen by parse_opt will be
+    reflected in arguments. */
+  argp_parse (&argp, argc, argv, 0, 0, &arguments);
+  
+  DEBUG(printf("Debugging Mode Enabled\n\n");)
+  DEBUG(printf ("CONFIG_FILE = %s\nDEBUG = %s\n\n",arguments.config, arguments.debug ? "yes" : "no"); )
+
   last_dump = time(0);
   sem_init(&sem_dumping,0,1);
 
@@ -138,7 +202,7 @@ int main (int argc, char *argv[]) {
   DEBUG(printf("Reading Config\n");)
   config = (t_config *) malloc(sizeof(t_config));
   // reading config file
-  config_init(config,"/etc/traff.conf"); // this function will initialize configuration
+  config_init(config,arguments.config); // this function will initialize configuration
   config->dt = time(0);
 
   DEBUG(print_config();)

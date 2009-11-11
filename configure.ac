@@ -7,6 +7,13 @@ AM_INIT_AUTOMAKE(@PACKAGE_NAME@, @PACKAGE_VERSION@)
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 
+AS_CASE([$host],
+       [alpha*-*-*], [CYCLE_OBJ=rpcc.o],
+       [i?86-*-*],   [CYCLE_OBJ=rdtsc.o],
+       [CYCLE_OBJ=""]
+     )
+     AC_SUBST([CYCLE_OBJ])
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL

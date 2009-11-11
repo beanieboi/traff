@@ -3,8 +3,6 @@
 #ifndef READCONFIG_H
 #define READCONFIG_H
 
-#define VERSION "0.6.1"
-
 #define TEXTLEN 32 
 #define FILELENGTH 1024
 #define LONGTEXT 32
