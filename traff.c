@@ -514,7 +514,10 @@ int data_mysql_dump (t_cat * cat) {
   t_data * data = 0;
   u_char ips[4]; 
   int bytediv;  
-  time_t timetag;
+  char timetag[30];
+  struct tm *tim;
+  size_t i;
+  time_t now;
 
   MYSQL mysql;
   char my_query[QUERYLENGTH];
@@ -526,11 +529,9 @@ int data_mysql_dump (t_cat * cat) {
   else
     bytediv = 1;
 
-  if (cat->timedivider > 0) {
-    timetag = (int)(time(0) / cat->timedivider); 
-  } else {
-    timetag = time(0);
-  }
+  now = time(0);
+  tim = localtime(&now);
+  i = strftime(timetag,30,"%Y-%m-%d",tim);
 
   bzero(my_query, QUERYLENGTH);
   DEBUG(printf("Initializing Mysql\n");)
@@ -556,7 +557,7 @@ int data_mysql_dump (t_cat * cat) {
     if ((data->input == 0) && (data->output == 0)) continue; // we will not dump lines where both counters are null.
     cipa(data->ip, ips);// convert int-ip into quaud-for-notation.
     DEBUG(printf("Dumping ip %d.%d.%d.%d\n",ips[0],ips[1],ips[2],ips[3]);)
-    snprintf(my_query,QUERYLENGTH,"update %s set input=input+%d,output=output+%d where ip=\"%d.%d.%d.%d\" and timetag=%ld",cat->sql->table,data->input,data->output,ips[0],ips[1],ips[2],ips[3],timetag);
+    snprintf(my_query,QUERYLENGTH,"UPDATE %s SET input=input+%d,output=output+%d WHERE ip=\"%d.%d.%d.%d\" AND timetag=\"%s\"", cat->sql->table, data->input, data->output, ips[0], ips[1], ips[2], ips[3], timetag);
     DEBUG(printf("Query: %s\n", my_query);)
     
     if (mysql_query(&mysql,my_query)){
@@ -565,7 +566,7 @@ int data_mysql_dump (t_cat * cat) {
     }
     DEBUG(printf("Error: %s, Affected Rows: %d\n",mysql_error(&mysql), mysql.affected_rows );)  
     if (! mysql.affected_rows) {
-      snprintf(my_query,QUERYLENGTH,"insert into %s (ip,timetag,input,output) values (\"%d.%d.%d.%d\",%ld,%d,%d)",cat->sql->table,ips[0],ips[1],ips[2],ips[3],timetag,data->input,data->output);
+      snprintf(my_query,QUERYLENGTH,"INSERT INTO %s (ip,timetag,input,output) VALUES (\"%d.%d.%d.%d\",\"%s\",%d,%d)", cat->sql->table, ips[0], ips[1], ips[2], ips[3], timetag, data->input, data->output);
       DEBUG(printf("First entry: using query:  %s\n",my_query);)
       mysql_query(&mysql,my_query);
       DEBUG(printf("%s\n",mysql_error(&mysql));)  
