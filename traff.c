@@ -38,7 +38,7 @@
 
 #define CAT_THREAD 0  //If this is set, threats will be created to account data
 #define DUMP 2   //0 will do nothing, 1 will use threads 2 will use fork
-#define DEBUG(s) {if ( arguments.debug ) {s}} while (0);
+#define DEBUG(s) do {if ( arguments.debug ) {s}} while (0);
 
 //typedef unsigned char U_CHAR;
 typedef struct {
