@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(Traff)
 
-
 set(TRAFF_MAJOR_VERSION 0)
 set(TRAFF_MINOR_VERSION 7)
 set(TRAFF_PATCH_VERSION 0)
