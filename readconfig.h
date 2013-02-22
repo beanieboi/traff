@@ -3,33 +3,39 @@
 #ifndef READCONFIG_H
 #define READCONFIG_H
 
-#define TEXTLEN 32 
+#define TEXTLEN 32
 #define FILELENGTH 1024
 #define LONGTEXT 32
 #define QUERYLENGTH 1024
 
-#if HAVE_LIBMYSQLCLIENT
-#include <mysql/mysql.h>
+#if WITH_MYSQL
+#include <mysql.h>
 #endif
 
-#if withPGSQL
-#include <postgresql/libpq-fe.h>
+#if WITH_PSQL
+#include <libpq-fe.h>
 #endif
 
 #include <stdlib.h>
 #include <errno.h>
-#include <pcap.h> 
-#include <pthread.h> 
+#include <pcap.h>
+#include <pthread.h>
 //#include "ip_table.h"
 
 typedef unsigned int U_INT;
 typedef unsigned char U_CHAR;
 
 typedef enum {
-  dt_Stdout, dt_Syslog, dt_Textfile, dt_Binfile, dt_Mysql, dt_Pgsql, dt_BadOption
+  dt_Stdout,
+  dt_Syslog,
+  dt_Textfile,
+  dt_Binfile,
+  dt_Mysql,
+  dt_Pgsql,
+  dt_BadOption
 } e_dumptypes;
 
-static struct { 
+static struct {
   const char * name;
   e_dumptypes dump_type;
 } dump_types[] = {
@@ -110,7 +116,7 @@ typedef struct t_data {
   U_INT ip;
   U_INT input;
   U_INT output;
-} t_data;      
+} t_data;
 
 
 t_config * config_init(t_config * config,char * filename);

@@ -1,0 +1,36 @@
+# - Find PostgreSQL library
+2 #
+3 # This module defines:
+4 #  POSTGRESQL_FOUND - True if the package is found
+5 #  POSTGRESQL_INCLUDE_DIR - containing libpq-fe.h
+6 #  POSTGRESQL_LIBRARIES - Libraries to link to use PQ functions.
+7
+8 if (POSTGRESQL_INCLUDE_DIR AND POSTGRESQL_LIBRARIES)
+9   set(POSTGRESQL_FIND_QUIETLY TRUE)
+10  endif (POSTGRESQL_INCLUDE_DIR AND POSTGRESQL_LIBRARIES)
+11
+12  # Include dir
+13  find_path(POSTGRESQL_INCLUDE_DIR
+14          NAMES libpq-fe.h
+15          PATH_SUFFIXES pgsql postgresql
+16  )
+17
+18  # Library
+19  find_library(POSTGRESQL_LIBRARY
+20    NAMES pq
+21  )
+22
+23  # handle the QUIETLY and REQUIRED arguments and set POSTGRESQL_FOUND to TRUE if
+24  # all listed variables are TRUE
+25  INCLUDE(FindPackageHandleStandardArgs)
+26  FIND_PACKAGE_HANDLE_STANDARD_ARGS(POSTGRESQL DEFAULT_MSG POSTGRESQL_LIBRARY POSTGRESQL_INCLUDE_DIR)
+27
+28  IF(POSTGRESQL_FOUND)
+29    SET( POSTGRESQL_LIBRARIES ${POSTGRESQL_LIBRARY} )
+30  ELSE(POSTGRESQL_FOUND)
+31    SET( POSTGRESQL_LIBRARIES )
+32  ENDIF(POSTGRESQL_FOUND)
+33
+34  # Lastly make it so that the POSTGRESQL_LIBRARY and POSTGRESQL_INCLUDE_DIR variables
+35  # only show up under the advanced options in the gui cmake applications.
+36  MARK_AS_ADVANCED( POSTGRESQL_LIBRARY POSTGRESQL_INCLUDE_DIR )
