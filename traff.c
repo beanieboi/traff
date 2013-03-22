@@ -174,7 +174,7 @@ int main (int argc, char *argv[])
     sem_init(&sem_dumping, 0, 1);
 
     openlog("traff",LOG_PID,LOG_DAEMON);
-    syslog(LOG_NOTICE, "Starting traff Version %s",VERSION);
+    syslog(LOG_NOTICE, "Starting traff Version %s", VERSION);
     signal(SIGUSR1, catch_signal);
     signal(SIGHUP,  catch_signal);
     signal(SIGTERM, catch_signal);
@@ -319,10 +319,10 @@ void print_config()
 
     sem_getvalue(&sem_queue_free,&buffer_free);
 
-#if HAVE_LIBMYSQLCLIENT
+#if WITH_MYSQL
     printf("Compiled with MySQL support\n");
 #endif
-#if withPGSQL
+#if WITH_PSQL
     printf("Compiled with PgSQL support\n");
 #endif
 
@@ -475,7 +475,7 @@ int pop_queue(t_raw_data * dst_data)
 //------------------------------------------------------------------------------------
 //Following, the macro to exit the next function. as this is needed in varios laces I decided to do i this way.
 #define EXIT_DATA_DUMP \
- 
+
 void data_dump(t_cat *cat)
 {
     // this function will only call the precodure acording to the dumptype
@@ -507,7 +507,7 @@ void data_dump(t_cat *cat)
 //------------------------------------------------------------------------------------
 int data_mysql_dump (t_cat * cat)
 {
-#if HAVE_LIBMYSQLCLIENT
+#if WITH_MYSQL
     t_data * data = 0;
     u_char ips[4];
     int bytediv;
@@ -582,7 +582,7 @@ int data_mysql_dump (t_cat * cat)
 //------------------------------------------------------------------------------------
 int data_pgsql_dump (t_cat * cat)
 {
-#if withPGSQL
+#if WITH_PSQL
     t_data * data = 0;
     u_char ips[4];
     int bytediv;

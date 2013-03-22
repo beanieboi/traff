@@ -24,9 +24,17 @@
 #define WHITESPACE " \t\r\n"
 
 typedef enum {
-    //      oSQL,
-    oBadOption,oDevices,oPeriod,oCat,
-    oPrimary, oSecondary, oTimeDivider, oByteDivider, oDump, oPackagecount, oBuffersize
+    oBadOption,
+    oDevices,
+    oPeriod,
+    oCat,
+    oPrimary,
+    oSecondary,
+    oTimeDivider,
+    oByteDivider,
+    oDump,
+    oPackagecount,
+    oBuffersize
 } e_opcodes;
 
 static struct {
@@ -45,14 +53,13 @@ static struct {
     { NULL,0 }
 };
 
-
-
 //--- Function Prototypes --------------------------------------------------------
 char * strdelim(char **s);
 static e_opcodes parse_token(const char *cp);
 unsigned int ipstrtoint(char * ipstr);
 static e_dumptypes parse_dump_token(const char *cp);
 //---------------------------------------------------------------------------------
+
 t_config * config_init(t_config * config,char * filename)
 {
 
