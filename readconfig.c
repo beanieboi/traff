@@ -317,7 +317,7 @@ static e_opcodes parse_token(const char *cp)
         if (strcasecmp(cp, keywords[i].name) == 0)
             return keywords[i].opcode;
 
-    return dt_BadOption;
+    return oBadOption;
 }
 //---------------------------------------------------------------------------------
 char * strdelim(char **s)
