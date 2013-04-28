@@ -561,7 +561,8 @@ int data_mysql_dump (t_cat * cat)
             fprintf(stderr,"Error connecting to Mysql-Database in category %s:\n%d, %s\n",cat->name,  mysql_errno(&mysql),mysql_error(&mysql));
             syslog(LOG_ERR,"Error connecting to Mysql-Database in category %s:\n%d, %s\n",cat->name, mysql_errno(&mysql),mysql_error(&mysql));
         }
-        DEBUG(printf("Error: %s, Affected Rows: %d\n",mysql_error(&mysql), mysql.affected_rows );)
+
+        DEBUG(printf("Error: %s, Affected Rows: %llu\n", mysql_error(&mysql), mysql.affected_rows );)
         if (! mysql.affected_rows) {
             snprintf(my_query,QUERYLENGTH,"INSERT INTO %s (ip,timetag,input,output) VALUES (\"%d.%d.%d.%d\",\"%s\",%d,%d)", cat->sql->table, ips[0], ips[1], ips[2], ips[3], timetag, data->input, data->output);
             DEBUG(printf("First entry: using query:  %s\n",my_query);)
