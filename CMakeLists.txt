@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 4.2)
 project(Traff)
 
 set(TRAFF_MAJOR_VERSION 0)
