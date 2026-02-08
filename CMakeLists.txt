@@ -18,13 +18,13 @@ option(WITH_MYSQL "Support MYSQL database dumping" off)
 option(WITH_PSQL "Support PostgreSQL database dumping" off)
 
 if(WITH_MYSQL)
-  find_package(MYSQL REQUIRED)
-  set(TRAFF_OPT_LIBS ${TRAFF_OPT_LIBS} ${MYSQL_LIBRARIES})
+    find_package(MYSQL REQUIRED)
+    set(TRAFF_OPT_LIBS ${TRAFF_OPT_LIBS} ${MYSQL_LIBRARIES})
 endif(WITH_MYSQL)
 
 if(WITH_PSQL)
-  find_package(POSTGRESQL REQUIRED)
-  set(TRAFF_OPT_LIBS ${TRAFF_OPT_LIBS} ${PostgreSQL_LIBRARY})
+    find_package(POSTGRESQL REQUIRED)
+    set(TRAFF_OPT_LIBS ${TRAFF_OPT_LIBS} ${PostgreSQL_LIBRARY})
 endif(WITH_PSQL)
 
 SET(traff_SRCS

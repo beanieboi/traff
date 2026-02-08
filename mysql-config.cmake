@@ -17,8 +17,8 @@ find_library( MYSQL_LIBRARY
 mark_as_advanced( MYSQL_LIBRARY MYSQL_INCLUDE_DIR )
 
 if( MYSQL_INCLUDE_DIR AND EXISTS "${MYSQL_INCLUDE_DIR}/mysql_version.h" )
-  file( STRINGS "${MYSQL_INCLUDE_DIR}/mysql_version.h" MYSQL_VERSION_H REGEX "^#define[ \t]+MYSQL_SERVER_VERSION[ \t]+\"[^\"]+\".*$" )
-  string( REGEX REPLACE "^.*MYSQL_SERVER_VERSION[ \t]+\"([^\"]+)\".*$" "\\1" MYSQL_VERSION_STRING "${MYSQL_VERSION_H}" )
+    file( STRINGS "${MYSQL_INCLUDE_DIR}/mysql_version.h" MYSQL_VERSION_H REGEX "^#define[ \t]+MYSQL_SERVER_VERSION[ \t]+\"[^\"]+\".*$" )
+    string( REGEX REPLACE "^.*MYSQL_SERVER_VERSION[ \t]+\"([^\"]+)\".*$" "\\1" MYSQL_VERSION_STRING "${MYSQL_VERSION_H}" )
 endif()
 
 # handle the QUIETLY and REQUIRED arguments and set MYSQL_FOUND to TRUE if
@@ -29,8 +29,8 @@ endif()
 #   VERSION_VAR MYSQL_VERSION_STRING )
 
 if(MYSQL_LIBRARY AND MYSQL_INCLUDE_DIR)
-  set(MYSQL_FOUND TRUE)
-  set( MYSQL_LIBRARIES ${MYSQL_LIBRARY} )
-  set( MYSQL_INCLUDE_DIRS ${PCRE_INCLUDE_DIR} )
-  message( STATUS "Found MySQL: ${MYSQL_LIBRARY}, ${MYSQL_INCLUDE_DIR}")
+    set(MYSQL_FOUND TRUE)
+    set( MYSQL_LIBRARIES ${MYSQL_LIBRARY} )
+    set( MYSQL_INCLUDE_DIRS ${PCRE_INCLUDE_DIR} )
+    message( STATUS "Found MySQL: ${MYSQL_LIBRARY}, ${MYSQL_INCLUDE_DIR}")
 endif()
