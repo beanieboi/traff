@@ -1,56 +1,60 @@
 	Traff - Traffic Accounting Program
 	Version 0.7
 
-WHAT IS IT? 
+WHAT IS IT?
 
-  Traff is a program that attaches itself to one or more network interfaces, 
-  sniffs all IP-packages passing at it and accounts each packets size. The collected 
+  Traff is a program that attaches itself to one or more network interfaces,
+  sniffs all IP-packages passing at it and accounts each packets size. The collected
   information can be dumped to a mysql-Database, for further processing.
 
 
 HOW DOES IT WORK?
 
-  The whole thing about Traff, is that you can specify for what IP you want to account 
-  the traffic, and even for what IPs talking with which peer. This means, that if you 
-  have a big up-link and you want to discover how much each or some hosts on your network 
-  are using this up-link, you can do that without caring about the other IP, as other 
+  The whole thing about Traff, is that you can specify for what IP you want to account
+  the traffic, and even for what IPs talking with which peer. This means, that if you
+  have a big up-link and you want to discover how much each or some hosts on your network
+  are using this up-link, you can do that without caring about the other IP, as other
   programs do. So much less data will be stored at your database.
-  The program runs as a daemon and periodically will dump all information collected to the 
+  The program runs as a daemon and periodically will dump all information collected to the
   database, syslog or a file.
-   
+
 
 UPDATE
-  
+
   Update-information can be found in file UPDATE
 
 
 INSTALLATION / PRECONDITIONS
-  
-  The script is being developed under Debian running kernel 2.6.x, but it should run on different 
-  kernel versions and different distributions. You must pay attention if you compile your kernel. 
+
+  The script is being developed under Debian running kernel 2.6.x, but it should run on different
+  kernel versions and different distributions. You must pay attention if you compile your kernel.
   keep in mind that the option CONFIG_PACKET must be compiled in. Generally, if tcpdump works, Traff
   should work as well.
-  What you will need is pcap- and optionally Mysql- and PgSQL- libraries and header files to compile Traff.
+  What you will need is pcap- and optionally MySQL/MariaDB- and PgSQL- libraries and header files to compile Traff.
   If all preconditions are met you can begin by
 
-    1. Unpacking the sources 
-    2. Run ./configure -- you may want to run ./configure --help to enable options: --enable-mysql --enable-postgresql
-    5. Type make install
-       Make install will copy binary files to /usr/local/bin. If you don like this, edit
-       the Makefile or install manually.
-    6. Change the configuration-file /etc/traff.conf to suit to your needs
-    7. Start traff.
+    1. Unpacking the sources
+    2. Run: zig build
+       Optional features can be enabled with:
+         zig build -Dmysql=true      -- Enable MySQL/MariaDB support
+         zig build -Dpsql=true       -- Enable PostgreSQL support
+       By default, MariaDB's pkg-config name (libmariadb) is used. If you
+       have MySQL instead of MariaDB, pass:
+         zig build -Dmysql=true -Dmysql-pkg=mysqlclient
+    3. The binary will be at zig-out/bin/traff. Copy it where you like.
+    4. Change the configuration-file /etc/traff.conf to suit to your needs
+    5. Start traff.
 
-    8. -Optionally- 
+    8. -Optionally-
        There is a initd-script for traff called traff.initd. This script was intended to run
-       on Debian systems. You my need to change it if you use another distribution. With this script 
-       you can configure you system to start traff at boot-time. Please remember to start traff only 
+       on Debian systems. You my need to change it if you use another distribution. With this script
+       you can configure you system to start traff at boot-time. Please remember to start traff only
        _after_ you set up your network.
 
 
 BUGS/UPDATES
 
-  Please report any bugs directly to me via email. Updates and new versions can be obtained 
+  Please report any bugs directly to me via email. Updates and new versions can be obtained
   at the projects repository at sourceforge.net.
 
   For the very new versions use the CVS-Versions. Information about this can also be obtained at
@@ -65,24 +69,22 @@ TODO
   - Test it and see if it works correctly :)
 
 COPYRIGHT
- 
-  Copyright (C) 2001 - Hans Marcus Krüger <hanskruger@iname.com>, 
+
+  Copyright (C) 2001 - Hans Marcus Krï¿½ger <hanskruger@iname.com>,
   Matthew Dormer <mdormat@users.sourceforge.com>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
-     
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-		      
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-				     
-  The authors can be reached via email addresses above
-						        
 
+  The authors can be reached via email addresses above

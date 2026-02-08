@@ -43,7 +43,8 @@ pub fn build(b: *std.Build) void {
     exe.linkSystemLibrary("pcap");
 
     if (with_mysql) {
-        exe.linkSystemLibrary("mysqlclient");
+        const mysql_pkg = b.option([]const u8, "mysql-pkg", "pkg-config name for MySQL/MariaDB (default: libmariadb)") orelse "libmariadb";
+        exe.linkSystemLibrary(mysql_pkg);
     }
     if (with_psql) {
         exe.linkSystemLibrary("pq");
