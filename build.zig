@@ -47,6 +47,10 @@ pub fn build(b: *std.Build) void {
         exe.linkSystemLibrary(mysql_pkg);
     }
     if (with_psql) {
+        if (b.option([]const u8, "psql-libdir", "Path to libpq library directory")) |psql_libdir| {
+            exe.addLibraryPath(.{ .cwd_relative = psql_libdir });
+            exe.addIncludePath(.{ .cwd_relative = b.fmt("{s}/../include", .{psql_libdir}) });
+        }
         exe.linkSystemLibrary("pq");
     }
 
