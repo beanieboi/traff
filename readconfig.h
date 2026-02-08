@@ -16,11 +16,11 @@
 #include <libpq-fe.h>
 #endif
 
-#include <stdlib.h>
 #include <errno.h>
 #include <pcap.h>
 #include <pthread.h>
-//#include "ip_table.h"
+#include <stdlib.h>
+// #include "ip_table.h"
 
 typedef unsigned int U_INT;
 typedef unsigned char U_CHAR;
@@ -36,19 +36,16 @@ typedef enum {
 } e_dumptypes;
 
 static struct {
-  const char * name;
+  const char *name;
   e_dumptypes dump_type;
-} dump_types[] = {
-      { "StdOut", dt_Stdout },
-      { "Syslog", dt_Syslog },
-      { "TextFile", dt_Textfile },
-      { "BinFile", dt_Binfile },
-      { "MySQL", dt_Mysql },
-      { "PgSQL", dt_Pgsql },
-      { "--Error: Bad Option--", dt_BadOption },
-      { NULL, 0 }
-};
-
+} dump_types[] = {{"StdOut", dt_Stdout},
+                  {"Syslog", dt_Syslog},
+                  {"TextFile", dt_Textfile},
+                  {"BinFile", dt_Binfile},
+                  {"MySQL", dt_Mysql},
+                  {"PgSQL", dt_Pgsql},
+                  {"--Error: Bad Option--", dt_BadOption},
+                  {NULL, 0}};
 
 typedef struct t_ip_filter {
   U_INT ip;
@@ -56,21 +53,20 @@ typedef struct t_ip_filter {
   U_INT port;
   U_CHAR prot;
   int value;
-  struct t_ip_filter * next;
+  struct t_ip_filter *next;
 } t_ip_filter;
 
-
 #define BUFFERSIZE 10000
-typedef void* t_BUFFER[BUFFERSIZE];
+typedef void *t_BUFFER[BUFFERSIZE];
 typedef struct t_interface_list {
-  pcap_t * device;
-  pthread_t * thread;
-// not needed any more (KD)
+  pcap_t *device;
+  pthread_t *thread;
+  // not needed any more (KD)
   int package_count;
   int buffersize;
   int write_buffer;
   char name[TEXTLEN];
-  struct t_interface_list * next;
+  struct t_interface_list *next;
 } t_interface_list;
 
 typedef struct t_sql {
@@ -85,15 +81,15 @@ typedef struct t_cat {
   char name[TEXTLEN];
   t_ip_filter *primary;
   t_ip_filter *secondary;
-  void * table;
+  void *table;
   U_INT table_next;
   int timedivider;
   int bytedivider;
   pthread_t thread;
   struct t_cat *next;
   e_dumptypes dump_type;
-  t_sql * sql;
-  char * filename;
+  t_sql *sql;
+  char *filename;
 } t_cat;
 
 typedef struct t_config {
@@ -101,8 +97,8 @@ typedef struct t_config {
   int devicecount;
   int dt;
   int buffer_size;
-  t_interface_list * devices;
-  t_cat * cats;
+  t_interface_list *devices;
+  t_cat *cats;
 } t_config;
 
 typedef struct {
@@ -118,11 +114,10 @@ typedef struct t_data {
   U_INT output;
 } t_data;
 
-
-t_config * config_init(t_config * config,char * filename);
-int config_read_config_file(t_config * config,char * filename);
-void config_destroy(t_config * config);
-char * get_dump_type_str(e_dumptypes dumptype);
+t_config *config_init(t_config *config, char *filename);
+int config_read_config_file(t_config *config, char *filename);
+void config_destroy(t_config *config);
+char *get_dump_type_str(e_dumptypes dumptype);
 
 char conf_file[FILELENGTH];
 
