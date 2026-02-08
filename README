@@ -5,7 +5,8 @@ WHAT IS IT?
 
   Traff is a program that attaches itself to one or more network interfaces,
   sniffs all IP-packages passing at it and accounts each packets size. The collected
-  information can be dumped to a mysql-Database, for further processing.
+  information can be dumped to a MySQL/MariaDB or PostgreSQL database, syslog, or
+  a file for further processing.
 
 
 HOW DOES IT WORK?
@@ -19,19 +20,11 @@ HOW DOES IT WORK?
   database, syslog or a file.
 
 
-UPDATE
-
-  Update-information can be found in file UPDATE
-
-
 INSTALLATION / PRECONDITIONS
 
-  The script is being developed under Debian running kernel 2.6.x, but it should run on different
-  kernel versions and different distributions. You must pay attention if you compile your kernel.
-  keep in mind that the option CONFIG_PACKET must be compiled in. Generally, if tcpdump works, Traff
-  should work as well.
-  What you will need is pcap- and optionally MySQL/MariaDB- and PgSQL- libraries and header files to compile Traff.
-  If all preconditions are met you can begin by
+  You will need pcap libraries and header files to compile Traff. MySQL/MariaDB
+  and PostgreSQL libraries are optional.
+  Generally, if tcpdump works, Traff should work as well.
 
     1. Unpacking the sources
     2. Run: zig build
@@ -41,36 +34,35 @@ INSTALLATION / PRECONDITIONS
        By default, MariaDB's pkg-config name (libmariadb) is used. If you
        have MySQL instead of MariaDB, pass:
          zig build -Dmysql=true -Dmysql-pkg=mysqlclient
+       On macOS with Homebrew, libraries may not be in the default search
+       path. Pass the library directory explicitly:
+         zig build -Dpsql=true -Dpsql-libdir=/opt/homebrew/opt/libpq/lib
     3. The binary will be at zig-out/bin/traff. Copy it where you like.
     4. Change the configuration-file /etc/traff.conf to suit to your needs
     5. Start traff.
 
-    8. -Optionally-
+    6. -Optionally-
        There is a initd-script for traff called traff.initd. This script was intended to run
-       on Debian systems. You my need to change it if you use another distribution. With this script
-       you can configure you system to start traff at boot-time. Please remember to start traff only
-       _after_ you set up your network.
+       on Debian systems. You may need to change it if you use another distribution. With this
+       script you can configure your system to start traff at boot-time. Please remember to
+       start traff only _after_ you set up your network.
 
-
-BUGS/UPDATES
-
-  Please report any bugs directly to me via email. Updates and new versions can be obtained
-  at the projects repository at sourceforge.net.
-
-  For the very new versions use the CVS-Versions. Information about this can also be obtained at
-  the projects repository at sourceforge.net.
+  Docker:
+    A Dockerfile is provided to build traff on Alpine Linux with all optional
+    features enabled:
+      docker build -t traff .
 
 
 CONTRIBUTIONS
 
-  Contributions are welcome. Please sent to to us via email.
+  Contributions are welcome.
 
 TODO
   - Test it and see if it works correctly :)
 
 COPYRIGHT
 
-  Copyright (C) 2001 - Hans Marcus Kr�ger <hanskruger@iname.com>,
+  Copyright (C) 2001 - Hans Marcus Krueger <hanskruger@iname.com>,
   Matthew Dormer <mdormat@users.sourceforge.com>
 
   This program is free software; you can redistribute it and/or modify
