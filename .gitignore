@@ -26,3 +26,5 @@ install_manifest.txt
 
 .deps/**
 autom4te.cache/**
+.zig-cache
+zig-out/bin
