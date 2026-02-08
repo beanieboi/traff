@@ -34,7 +34,7 @@ pub fn build(b: *std.Build) void {
             "readconfig.c",
         },
         .flags = &.{
-            "-std=c99",
+            "-std=gnu99",
             "-Wall",
         },
     });
