@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+char conf_file[FILELENGTH];
+
 #define WHITESPACE " \t\r\n"
 
 typedef enum {

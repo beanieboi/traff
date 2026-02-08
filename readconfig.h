@@ -119,6 +119,6 @@ int config_read_config_file(t_config *config, char *filename);
 void config_destroy(t_config *config);
 char *get_dump_type_str(e_dumptypes dumptype);
 
-char conf_file[FILELENGTH];
+extern char conf_file[FILELENGTH];
 
 #endif
